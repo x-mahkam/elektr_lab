@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Elektr va magnetizm — virtual laboratoriya</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Commissioner:wght@400;500;650&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1F4; --panel:#FFFFFF; --ink:#16222E; --muted:#5B6B7A; --line:#D5DCE3;
+  --accent:#1E5EB8; --accent-ink:#FFFFFF; --soft:#E4ECF8; --bench:#0D141A; --bench-ink:#C9D6E0;
+  --warn:#B42318; --ok:#1B7F4B; --lcd:#0B1F17; --lcd-ink:#7CF0B0;
+  --ui:"Commissioner","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  --mono:"Spline Sans Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#10171E; --panel:#182129; --ink:#E6EDF3; --muted:#9AA9B7; --line:#2A3641;
+  --accent:#6EA6F0; --accent-ink:#071A33; --soft:#1A2B45; --warn:#FF8A7A; --ok:#5FD39A; }}
+:root[data-theme="dark"]{
+  --bg:#10171E; --panel:#182129; --ink:#E6EDF3; --muted:#9AA9B7; --line:#2A3641;
+  --accent:#6EA6F0; --accent-ink:#071A33; --soft:#1A2B45; --warn:#FF8A7A; --ok:#5FD39A; }
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 var(--ui)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.top{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--line);background:var(--panel)}
+.brand{font-weight:650;font-size:1.15rem;letter-spacing:-.01em;margin-right:auto}
+.brand small{display:block;font-weight:400;color:var(--muted);font-size:.8rem;letter-spacing:0}
+.top label{font-size:.85rem;color:var(--muted);display:flex;gap:8px;align-items:center}
+.top input{border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:5px 8px;width:11rem}
+.top input[type=number]{width:4.5rem}
+.shell{display:grid;grid-template-columns:270px minmax(0,1fr);min-height:80vh}
+nav{border-right:1px solid var(--line);padding:16px 10px;background:var(--panel);align-self:start;position:sticky;top:0;max-height:100vh;overflow-y:auto}
+nav button{display:grid;grid-template-columns:2rem 1fr;gap:4px;width:100%;text-align:left;border:0;background:none;padding:9px 10px;border-radius:8px;cursor:pointer;line-height:1.3;font-size:.93rem}
+nav button b{font-family:var(--mono);font-weight:500;color:var(--muted)}
+nav button:hover{background:var(--bg)}
+nav button[aria-current=true]{background:var(--soft);color:var(--ink)}
+nav button[aria-current=true] b{color:var(--accent)}
+nav button span small{display:block;color:var(--muted);font-size:.76rem}
+main{min-width:0;padding:22px clamp(14px,3vw,36px) 60px;max-width:1180px}
+h1{font-size:clamp(1.35rem,2.4vw,1.8rem);line-height:1.2;margin:0 0 6px;font-weight:650;letter-spacing:-.015em}
+.goal{color:var(--muted);max-width:70ch;margin:0 0 18px}
+h2{font-size:1.02rem;margin:26px 0 10px;font-weight:650}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px}
+.tabs button{border:1px solid var(--line);background:var(--panel);padding:7px 14px;border-radius:999px;cursor:pointer;font-size:.9rem}
+.tabs button[aria-selected=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.rig{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;align-items:start}
+.bench{background:var(--bench);border-radius:12px;padding:10px;color:var(--bench-ink);min-width:0}
+.bench canvas{display:block;width:100%;border-radius:6px;touch-action:none}
+.card canvas{display:block;width:100%}
+.bench .cap,.card .cap{font-size:.78rem;color:#8ea2b3;margin:6px 4px 2px}
+.side{display:grid;gap:10px}
+.lcd{min-width:0;overflow:hidden;background:var(--lcd);color:var(--lcd-ink);border-radius:10px;padding:10px 14px;font-family:var(--mono)}
+.lcd .k{font-family:var(--ui);font-size:.74rem;color:#8fb8a3;display:block}
+.lcd .v{font-size:1.35rem;font-weight:500;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.lcd .u{font-size:.85rem;color:#8fb8a3;margin-left:6px}
+.lcd.off .v{opacity:.25}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.ctl{display:grid;gap:4px;margin:0 0 12px}
+.ctl:last-child{margin-bottom:0}
+.ctl .row{display:flex;justify-content:space-between;gap:10px;font-size:.88rem}
+.ctl .row output{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.ctl .in{display:flex;gap:6px;align-items:center}
+.ctl .nud{flex-wrap:wrap}
+.ctl input[type=range]{flex:1;min-width:0;accent-color:var(--accent)}
+.ctl select{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:6px 8px;width:100%}
+.nb{border:1px solid var(--line);background:var(--bg);border-radius:6px;min-width:1.9rem;height:2rem;cursor:pointer;font-family:var(--mono);font-size:.74rem;padding:0 5px;white-space:nowrap}
+.btn{border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:500}
+.btn.ghost{background:none;color:var(--accent)}
+.btn.danger{border-color:var(--warn);background:none;color:var(--warn)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0}
+.chk{display:flex;gap:8px;align-items:center;font-size:.9rem;margin:0 0 8px}
+.chk input{accent-color:var(--accent);width:1.05rem;height:1.05rem}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(270px,100%),1fr));gap:0 22px}
+.cols>*{min-width:0}
+ol.steps{margin:0;padding-left:1.35rem;max-width:78ch}
+ol.steps li{margin:0 0 6px}
+details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 16px;margin:14px 0 0}
+details summary{cursor:pointer;font-weight:500}
+details p,details li{max-width:78ch}
+.f{font-family:var(--mono);background:var(--bg);border-radius:6px;padding:2px 7px;font-size:.9em;overflow-wrap:anywhere}
+.scroll{overflow-x:auto}
+table.j{border-collapse:collapse;width:100%;font-size:.88rem;font-variant-numeric:tabular-nums}
+table.j th{font-weight:500;text-align:right;color:var(--muted);border-bottom:1px solid var(--line);padding:6px 8px;white-space:nowrap}
+table.j td{text-align:right;border-bottom:1px solid var(--line);padding:4px 8px;font-family:var(--mono);white-space:nowrap}
+table.j td input{width:6.2rem;border:1px solid var(--line);background:var(--bg);border-radius:5px;padding:3px 6px;text-align:right;font-family:var(--mono)}
+table.j td button{border:0;background:none;color:var(--muted);cursor:pointer}
+.empty{color:var(--muted);font-size:.9rem;padding:10px 2px}
+.verify{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px}
+.verify label{min-width:min(15rem,100%);font-size:.9rem}
+.verify input{width:7.5rem;border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:6px 8px;font-family:var(--mono)}
+.verify .res{font-size:.88rem}
+.res.ok{color:var(--ok)} .res.bad{color:var(--warn)}
+.note{border-left:3px solid var(--warn);background:var(--panel);padding:8px 12px;border-radius:0 8px 8px 0;font-size:.9rem;margin:12px 0;max-width:78ch}
+.pass{font-size:.85rem;color:var(--muted);margin:0}
+.pass b{color:var(--ink);font-weight:500}
+.quiz fieldset{border:1px solid var(--line);border-radius:10px;margin:0 0 10px;padding:10px 14px;background:var(--panel)}
+.quiz legend{font-weight:500;padding:0 6px}
+.quiz label{display:block;padding:3px 0;font-size:.93rem}
+.quiz .right{color:var(--ok)} .quiz .wrong{color:var(--warn)}
+@media (max-width:900px){
+  .shell{grid-template-columns:1fr}
+  nav{border-right:0;border-bottom:1px solid var(--line);display:flex;gap:6px;overflow-x:auto;padding:8px 10px}
+  nav button{width:auto;white-space:nowrap;grid-template-columns:auto auto}
+  nav button span small{display:none}
+  .rig{grid-template-columns:1fr}
+  .side{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+  .lcd .v{font-size:1.25rem}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">Elektr va magnetizm — virtual laboratoriya<small>UrDU “Fizika” kafedrasi, umumiy fizika kursi bo‘yicha 15 ta laboratoriya ishi</small></div>
+  <label>Talaba <input id="who" placeholder="Familiya, ism, guruh" autocomplete="off"></label>
+  <label>Variant № <input id="variant" type="number" min="1" max="30" value="1"></label>
+  <label><input id="snd" type="checkbox" checked style="width:1rem;height:1rem;accent-color:var(--accent)"> Tovush</label>
+</header>
+<div class="shell">
+  <nav id="nav" aria-label="Laboratoriya ishlari"></nav>
+  <main id="main"></main>
+</div>
+<script>
+"use strict";
+const C=299792458, H=6.62607e-34, QE=1.602177e-19;
+const $=(s,r=document)=>r.querySelector(s);
+function el(tag,attrs,...kids){const e=document.createElement(tag);
+  if(attrs)for(const k in attrs){const v=attrs[k];
+    if(k==='class')e.className=v;else if(k==='html')e.innerHTML=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);
+    else if(v===true)e.setAttribute(k,'');else if(v!==false&&v!=null)e.setAttribute(k,v);}
+  for(const c of kids.flat()){if(c==null)continue;e.append(c.nodeType?c:document.createTextNode(c));}
+  return e;}
+const store={get(k,d){try{const v=localStorage.getItem('em_'+k);return v==null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem('em_'+k,v)}catch(e){}}};
+let VARIANT=Math.min(30,Math.max(1,parseInt(store.get('variant','1'))||1));
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+/* variantga bog‘liq yashirin parametr: lab raqami va kalit bo‘yicha [lo,hi] oralig‘ida */
+function V(lab,key,lo,hi){let h=VARIANT*7919+lab*104729+5;for(const ch of key)h=(h*31+ch.charCodeAt(0))|0;const r=mulberry(h);r();return lo+(hi-lo)*r()}
+function gauss(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+const noisy=(x,rel,abs=0)=>x*(1+rel*gauss())+abs*gauss();
+const fmt=(x,d=2)=>Number.isFinite(x)?x.toFixed(d).replace('.',','):'—';
+function nm2rgb(w,a=1){let r=0,g=0,b=0;
+  if(w<440){r=-(w-440)/60;b=1}else if(w<490){g=(w-440)/50;b=1}else if(w<510){g=1;b=-(w-510)/20}
+  else if(w<580){r=(w-510)/70;g=1}else if(w<645){r=1;g=-(w-645)/65}else{r=1}
+  let f=1;if(w<420)f=.35+.65*(w-380)/40;else if(w>700)f=.35+.65*(780-w)/80;
+  const c=x=>Math.round(255*Math.pow(Math.max(0,x)*f,.8));return `rgba(${c(r)},${c(g)},${c(b)},${a})`}
+/* ---------- boshqaruv elementlari ---------- */
+function slider(o){const dec=o.dec??(String(o.step).split('.')[1]||'').length;
+  const out=el('output',null,''),inp=el('input',{type:'range',min:o.min,max:o.max,step:o.step,value:o.value,'aria-label':o.label});
+  const show=()=>out.textContent=fmt(+inp.value,dec)+(o.unit?' '+o.unit:'');
+  const fire=()=>{show();o.oninput&&o.oninput(+inp.value)};
+  inp.addEventListener('input',fire);
+  const nudge=(k)=>el('button',{class:'nb',type:'button',title:(k>0?'+':'−')+fmt(Math.abs(k),dec),onclick:()=>{inp.value=Math.min(o.max,Math.max(o.min,+inp.value+k));fire()}},(k>0?'+':'−')+(o.nudgeLabel?o.nudgeLabel(Math.abs(k)):''));
+  const steps=o.nudges||[o.step];
+  const root=steps.length>1?el('div',{class:'ctl'},el('div',{class:'row'},el('span',null,o.label),out),el('div',{class:'in'},inp),
+      el('div',{class:'in nud'},steps.slice().reverse().map(s=>nudge(-s)),el('span',{style:'flex:1'}),steps.map(s=>nudge(s))))
+    :el('div',{class:'ctl'},el('div',{class:'row'},el('span',null,o.label),out),el('div',{class:'in'},nudge(-steps[0]),inp,nudge(steps[0])));
+  show();return{root,get:()=>+inp.value,set:v=>{inp.value=v;show()},el:inp}}
+function select(o){const s=el('select',{'aria-label':o.label,onchange:()=>o.onchange&&o.onchange(s.value)},o.options.map(([v,t])=>el('option',{value:v},t)));
+  if(o.value!=null)s.value=o.value;return{root:el('div',{class:'ctl'},el('div',{class:'row'},el('span',null,o.label)),s),get:()=>s.value,set:v=>s.value=v}}
+function check(label,val,onchange){const i=el('input',{type:'checkbox',onchange:()=>onchange&&onchange(i.checked)});i.checked=!!val;
+  return{root:el('label',{class:'chk'},i,label),get:()=>i.checked,set:v=>i.checked=v}}
+const button=(t,fn,kind='')=>el('button',{class:'btn '+kind,type:'button',onclick:e=>{if(typeof SFX!=='undefined')SFX.click(kind?1200:800,.03,.06);fn&&fn(e)}},t);
+function lcd(label,unit){const v=el('span',{class:'v'},'—'),root=el('div',{class:'lcd'},el('span',{class:'k'},label),v,el('span',{class:'u'},unit||''));
+  return{root,set:(x,d=2)=>{v.textContent=typeof x==='string'?x:fmt(x,d)},off:b=>root.classList.toggle('off',b),unit:u=>root.lastChild.textContent=u}}
+/* ---------- o‘lchash jurnali ---------- */
+function journal(cols,opt={}){const rows=[];const body=el('tbody'),empty=el('div',{class:'empty'},opt.empty||'Jurnal bo‘sh. O‘lchash natijasini yozish uchun “Jadvalga yozish” tugmasini bosing.');
+  const tbl=el('table',{class:'j'},el('thead',null,el('tr',null,el('th',null,'№'),cols.map(c=>el('th',null,c.h)),el('th',null,''))),body);
+  const api={rows,onchange:null};
+  function render(){body.textContent='';rows.forEach((r,i)=>{body.append(el('tr',null,el('td',null,String(i+1)),cols.map((c,j)=>{
+      if(c.edit){const inp=el('input',{inputmode:'decimal',value:r[j]??'','aria-label':c.h,oninput:()=>{r[j]=inp.value;api.onchange&&api.onchange()}});return el('td',null,inp)}
+      return el('td',null,typeof r[j]==='number'?fmt(r[j],c.d??3):String(r[j]??''))}),
+      el('td',null,el('button',{title:'Satrni o‘chirish',onclick:()=>{rows.splice(i,1);render();api.onchange&&api.onchange()}},'✕'))))});
+    empty.hidden=rows.length>0;tbl.hidden=rows.length===0}
+  api.add=r=>{rows.push(r);render();api.onchange&&api.onchange()};
+  api.clear=()=>{rows.length=0;render();api.onchange&&api.onchange()};
+  api.num=(i,j)=>{const v=rows[i][j];return typeof v==='number'?v:parseFloat(String(v).replace(',','.'))};
+  const csv=()=>[cols.map(c=>c.h).join('\t'),...rows.map(r=>r.map(v=>typeof v==='number'?String(v).replace('.',','):v??'').join('\t'))].join('\n');
+  const msg=el('span',{class:'res'});
+  const copy=button('Jadvaldan nusxa olish (Excel uchun)',async()=>{const t=csv();let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(e){}
+    if(!ok){const ta=el('textarea',{style:'width:100%;height:120px;margin-top:8px;font:12px var(--mono)'});ta.value=t;api.root.append(ta);ta.select()}
+    msg.textContent=ok?'Nusxa olindi — Excelga qo‘ying (Ctrl+V).':'Matnni belgilab, Ctrl+C bilan nusxa oling.'},'ghost');
+  api.root=el('div',null,el('div',{class:'scroll'},tbl),empty,el('div',{class:'btns'},copy,button('Jurnalni tozalash',()=>api.clear(),'ghost'),msg));
+  render();return api}
+/* ---------- natijani tekshirish ---------- */
+function verify(items){return el('div',{class:'card'},items.map(it=>{const inp=el('input',{inputmode:'decimal',placeholder:it.unit,'aria-label':it.label}),res=el('span',{class:'res'});
+    const go=()=>{const x=parseFloat(inp.value.replace(',','.'));if(!Number.isFinite(x)){res.className='res bad';res.textContent='Son kiriting.';return}
+      const t=it.truth(),err=it.abs!=null?Math.abs(x-t):Math.abs(x-t)/Math.abs(t),ok=err<=(it.abs??it.tol);
+      res.className='res '+(ok?'ok':'bad');
+      res.textContent=ok?`To‘g‘ri: farq ${it.abs!=null?fmt(err,3)+' '+it.unit:fmt(err*100,1)+' %'} — ruxsat etilgan chegarada.`:`Farq katta (${it.abs!=null?fmt(err,3)+' '+it.unit:fmt(err*100,1)+' %'}). O‘lchash va hisoblarni, ayniqsa birliklarni qayta tekshiring.`};
+    return el('div',{class:'verify'},el('label',null,it.label),inp,button('Tekshirish',go,'ghost'),res)}))}
+/* ---------- canvas yordamchilari ---------- */
+function fit(cv,h){const dpr=Math.min(2,window.devicePixelRatio||1),w=Math.max(280,cv.clientWidth||cv.parentNode.clientWidth||600);
+  cv.style.height=h+'px';cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);return{g,w,h}}
+function niceTicks(a,b,n=5){if(a===b){a-=1;b+=1}const s=(b-a)/n,p=Math.pow(10,Math.floor(Math.log10(s))),m=[1,2,5,10].find(k=>k*p>=s)*p;const t=[];for(let v=Math.ceil(a/m)*m;v<=b+1e-9;v+=m)t.push(+v.toFixed(10));return t}
+/* grafik: series=[{pts:[[x,y]],color,line,dots}], hover=true bo‘lsa kursor koordinatasi ko‘rsatiladi */
+function plot(cv,o){const{g,w,h}=fit(cv,o.height||260);const css=getComputedStyle(document.documentElement),ink=css.getPropertyValue('--ink'),mut=css.getPropertyValue('--muted'),ln=css.getPropertyValue('--line');
+  const L=58,R=14,T=14,B=42;let xs=[],ys=[];o.series.forEach(s=>s.pts.forEach(p=>{if(Number.isFinite(p[0])&&Number.isFinite(p[1])){xs.push(p[0]);ys.push(p[1])}}));
+  g.clearRect(0,0,w,h);g.font='12px '+css.getPropertyValue('--ui');
+  if(!xs.length){g.fillStyle=mut;g.fillText(o.empty||'Grafik uchun jurnalda kamida ikkita nuqta bo‘lishi kerak.',L,h/2);cv._map=null;return}
+  let x0=o.xmin??Math.min(...xs),x1=o.xmax??Math.max(...xs),y0=o.ymin??Math.min(...ys),y1=o.ymax??Math.max(...ys);
+  if(x0===x1){x0-=1;x1+=1}if(y0===y1){y0-=1;y1+=1}const py=(y1-y0)*.06;if(o.ymin==null)y0-=py;y1+=py;
+  const X=x=>L+(x-x0)/(x1-x0)*(w-L-R),Y=y=>h-B-(y-y0)/(y1-y0)*(h-T-B);
+  g.strokeStyle=ln;g.fillStyle=mut;g.lineWidth=1;g.textAlign='center';
+  niceTicks(x0,x1,6).forEach(t=>{g.beginPath();g.moveTo(X(t),T);g.lineTo(X(t),h-B);g.stroke();g.fillText(String(t).replace('.',','),X(t),h-B+16)});
+  g.textAlign='right';niceTicks(y0,y1,5).forEach(t=>{g.beginPath();g.moveTo(L,Y(t));g.lineTo(w-R,Y(t));g.stroke();g.fillText(String(t).replace('.',','),L-6,Y(t)+4)});
+  g.fillStyle=ink;g.textAlign='center';g.fillText(o.xlabel||'',(L+w-R)/2,h-8);g.save();g.translate(13,(T+h-B)/2);g.rotate(-Math.PI/2);g.fillText(o.ylabel||'',0,0);g.restore();
+  (o.hlines||[]).forEach(hl=>{g.strokeStyle=hl.color||mut;g.setLineDash([5,4]);g.beginPath();g.moveTo(L,Y(hl.y));g.lineTo(w-R,Y(hl.y));g.stroke();g.setLineDash([]);g.fillStyle=hl.color||mut;g.textAlign='left';g.fillText(hl.label||'',L+6,Y(hl.y)-5)});
+  o.series.forEach(s=>{g.strokeStyle=g.fillStyle=s.color||'#c0182b';g.lineWidth=1.8;
+    if(s.line){g.beginPath();s.pts.forEach((p,i)=>i?g.lineTo(X(p[0]),Y(p[1])):g.moveTo(X(p[0]),Y(p[1])));g.stroke()}
+    if(s.dots!==false)s.pts.forEach(p=>{g.beginPath();g.arc(X(p[0]),Y(p[1]),s.r||3.2,0,7);g.fill()})});
+  cv._map={x0,x1,y0,y1,L,R,T,B,w,h};
+  if(o.hover&&!cv._hov){cv._hov=true;const tip=el('div',{class:'cap'},'Kursorni grafik ustiga olib boring — nuqta koordinatalari shu yerda ko‘rinadi.');cv.after(tip);
+    cv.addEventListener('pointermove',e=>{const m=cv._map;if(!m)return;const r=cv.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+      const x=m.x0+(mx-m.L)/(m.w-m.L-m.R)*(m.x1-m.x0),y=m.y0+(m.h-m.B-my)/(m.h-m.T-m.B)*(m.y1-m.y0);
+      tip.textContent=o.hover(x,y)})}}
+/* eng kichik kvadratlar */
+function linfit(p){const n=p.length;let sx=0,sy=0,sxx=0,sxy=0;p.forEach(([x,y])=>{sx+=x;sy+=y;sxx+=x*x;sxy+=x*y});const k=(n*sxy-sx*sy)/(n*sxx-sx*sx);return{k,b:(sy-k*sx)/n}}
+/* ---------- ilova karkasi ---------- */
+const LABS=[];let current=null,raf=0,cleanup=[];
+function loop(fn){let last=performance.now();const tick=t=>{const dt=Math.min(.1,(t-last)/1000);last=t;fn(dt,t/1000);raf=requestAnimationFrame(tick)};raf=requestAnimationFrame(tick)}
+function onResize(fn){let t;const h=()=>{clearTimeout(t);t=setTimeout(fn,120)};window.addEventListener('resize',h);cleanup.push(()=>window.removeEventListener('resize',h))}
+function section(title,...kids){return[el('h2',null,title),...kids]}
+function steps(list){return el('ol',{class:'steps'},list.map(s=>el('li',{html:s})))}
+function theory(title,html){return el('details',null,el('summary',null,title),el('div',{html}))}
+function tabs(defs,host){const bar=el('div',{class:'tabs',role:'tablist'}),body=el('div');
+  const open=i=>{cancelAnimationFrame(raf);[...bar.children].forEach((b,j)=>b.setAttribute('aria-selected',j===i));body.textContent='';defs[i].build(body)};
+  defs.forEach((d,i)=>bar.append(el('button',{role:'tab',type:'button',onclick:()=>open(i)},d.name)));host.append(bar,body);open(0)}
+function show(id){cancelAnimationFrame(raf);cleanup.forEach(f=>f());cleanup=[];if(typeof SFX!=='undefined')SFX.stopTone();current=id;store.set('lab',id);
+  const lab=LABS.find(l=>l.id===id)||LABS[0],main=$('#main');main.textContent='';
+  [...$('#nav').children].forEach(b=>b.setAttribute('aria-current',b.dataset.id==lab.id));
+  main.append(el('h1',null,lab.id>9?lab.title:`${lab.id}-ish. ${lab.title}`),el('p',{class:'goal'},lab.goal));lab.build(main);window.scrollTo(0,0)}
+function boot(){const nav=$('#nav');LABS.forEach(l=>nav.append(el('button',{type:'button','data-id':l.id,onclick:()=>show(l.id)},el('b',null,l.id>9?'★':String(l.id)),el('span',null,l.short,el('small',null,l.kind)))));
+  const v=$('#variant'),who=$('#who');v.value=VARIANT;who.value=store.get('who','');
+  who.addEventListener('input',()=>store.set('who',who.value));
+  v.addEventListener('change',()=>{VARIANT=Math.min(30,Math.max(1,parseInt(v.value)||1));v.value=VARIANT;store.set('variant',VARIANT);show(current)});
+  const snd=$('#snd');if(snd){snd.addEventListener('change',()=>{SFX.on=snd.checked;if(!snd.checked)SFX.stopTone()})}
+  show(parseInt(store.get('lab','1'))||1)}
+/* ---------- chizish yordamchilari ---------- */
+const INK='#C9D6E0',MUT='#8ea2b3',WIRE='#D9A441',REDC='#E8503A',BLUC='#4F9CF5';
+function gLabel(g,t,x,y,al='center',c=MUT,sz=12){g.font=sz+'px Commissioner,Segoe UI,sans-serif';g.fillStyle=c;g.textAlign=al;g.textBaseline='middle';g.fillText(t,x,y)}
+function gBox(g,x,y,w,h,fill='#2b3a47',stroke='#52677a',r=4){g.fillStyle=fill;g.strokeStyle=stroke;g.lineWidth=1.2;g.beginPath();g.roundRect(x,y,w,h,r);g.fill();g.stroke()}
+function gWire(g,pts,c=WIRE,lw=2){g.strokeStyle=c;g.lineWidth=lw;g.lineJoin='round';g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke()}
+function gDot(g,x,y,c=WIRE,r=3){g.fillStyle=c;g.beginPath();g.arc(x,y,r,0,7);g.fill()}
+function gRes(g,x,y,w,label,vert=false){g.save();g.translate(x,y);if(vert)g.rotate(Math.PI/2);gBox(g,-w/2,-7,w,14,'#1a242d','#9fb3c4',2);g.restore();if(label)gLabel(g,label,x+(vert?16:0),y+(vert?0:-16))}
+function gCap(g,x,y,label,vert=false){g.save();g.translate(x,y);if(vert)g.rotate(Math.PI/2);g.strokeStyle='#9fb3c4';g.lineWidth=3;g.beginPath();g.moveTo(-4,-12);g.lineTo(-4,12);g.moveTo(4,-12);g.lineTo(4,12);g.stroke();g.restore();if(label)gLabel(g,label,x+(vert?20:0),y+(vert?0:-20))}
+function gCoil(g,x,y,w,label,vert=false){g.save();g.translate(x,y);if(vert)g.rotate(Math.PI/2);g.strokeStyle='#9fb3c4';g.lineWidth=2;g.beginPath();const n=4,s=w/n;for(let i=0;i<n;i++)g.arc(-w/2+s/2+i*s,0,s/2,Math.PI,0);g.stroke();g.restore();if(label)gLabel(g,label,x+(vert?18:0),y+(vert?0:-16))}
+function gSrc(g,x,y,label){g.strokeStyle='#9fb3c4';g.lineWidth=2;g.beginPath();g.arc(x,y,12,0,7);g.stroke();gLabel(g,'~',x,y+1,'center',INK,15);if(label)gLabel(g,label,x,y-22)}
+function gBat(g,x,y,label,vert=true){g.save();g.translate(x,y);if(!vert)g.rotate(-Math.PI/2);g.strokeStyle='#9fb3c4';g.lineWidth=3;g.beginPath();g.moveTo(-3,-14);g.lineTo(-3,14);g.stroke();g.lineWidth=1.5;g.beginPath();g.moveTo(3,-7);g.lineTo(3,7);g.stroke();g.restore();if(label)gLabel(g,label,x+(vert?22:0),y+(vert?0:-22))}
+function gMeter(g,x,y,sym,val,unit,r=22){g.fillStyle='#0b1f17';g.strokeStyle='#9fb3c4';g.lineWidth=2;g.beginPath();g.arc(x,y,r,0,7);g.fill();g.stroke();gLabel(g,sym,x,y-6,'center',INK,13);if(val!=null)gLabel(g,val+(unit?' '+unit:''),x,y+9,'center','#7CF0B0',10)}
+function gSwitch(g,x,y,on,label){g.strokeStyle='#9fb3c4';g.lineWidth=2;gDot(g,x-12,y,'#9fb3c4');gDot(g,x+12,y,'#9fb3c4');g.beginPath();g.moveTo(x-12,y);g.lineTo(on?x+12:x+8,on?y:y-12);g.stroke();if(label)gLabel(g,label,x,y-18)}
+/* strelkali asbob: v [-1..1] */
+function gNeedle(g,x,y,v,label,r=46){g.fillStyle='#0b1f17';g.strokeStyle='#9fb3c4';g.lineWidth=2;g.beginPath();g.arc(x,y,r,Math.PI*1.15,Math.PI*1.85);g.lineTo(x,y);g.closePath();g.fill();g.stroke();
+  for(let k=-5;k<=5;k++){const a=Math.PI*1.5+k*0.07*Math.PI;g.strokeStyle=k?'#5a7389':'#C9D6E0';g.lineWidth=k%5?1:2;g.beginPath();g.moveTo(x+Math.cos(a)*(r-9),y+Math.sin(a)*(r-9));g.lineTo(x+Math.cos(a)*(r-3),y+Math.sin(a)*(r-3));g.stroke()}
+  const a=Math.PI*1.5+Math.max(-1.08,Math.min(1.08,v))*0.35*Math.PI;g.strokeStyle=REDC;g.lineWidth=2;g.beginPath();g.moveTo(x,y);g.lineTo(x+Math.cos(a)*(r-6),y+Math.sin(a)*(r-6));g.stroke();gDot(g,x,y,REDC,3);if(label)gLabel(g,label,x,y+14)}
+function gRail(g,w,y){g.fillStyle='#1a242d';g.fillRect(16,y,w-32,8);g.fillStyle='#2a3743';for(let x=30;x<w-30;x+=26)g.fillRect(x,y+3,2,2)}
+function gGrid(g,x,y,w,h,step){g.strokeStyle='#22303b';g.lineWidth=1;for(let i=0;i<=w;i+=step){g.beginPath();g.moveTo(x+i,y);g.lineTo(x+i,y+h);g.stroke()}for(let j=0;j<=h;j+=step){g.beginPath();g.moveTo(x,y+j);g.lineTo(x+w,y+j);g.stroke()}}
+/* ---------- jonlantirish: tovush, strelka inersiyasi, tok oqimi, sudrash ---------- */
+const SFX={ctx:null,on:true,tone:null,gainNode:null,
+  ac(){if(!this.ctx){try{this.ctx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(this.ctx&&this.ctx.state==='suspended')this.ctx.resume();return this.ctx},
+  click(f=1800,d=.04,v=.15){if(!this.on)return;const c=this.ac();if(!c)return;const o=c.createOscillator(),g=c.createGain();o.type='square';o.frequency.value=f;g.gain.setValueAtTime(v,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+d);o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+d)},
+  relay(){this.click(900,.06,.2);setTimeout(()=>this.click(1400,.03,.1),40)},
+  beep(){this.click(2400,.08,.12)},
+  setTone(level,freq=1000){const c=this.ac();if(!c)return;if(!this.tone){this.tone=c.createOscillator();this.gainNode=c.createGain();this.tone.type='sine';this.tone.frequency.value=freq;this.gainNode.gain.value=0;this.tone.connect(this.gainNode);this.gainNode.connect(c.destination);this.tone.start()}
+    this.gainNode.gain.setTargetAtTime(this.on?Math.min(.25,level):0,c.currentTime,.05)},
+  stopTone(){if(this.gainNode)this.gainNode.gain.setTargetAtTime(0,this.ctx.currentTime,.05)}};
+
+/* so‘nuvchi tebranish bilan maqsadga intiluvchi kattalik (strelka, sath) */
+class Needle{constructor(v=0,w0=9,z=.35){this.v=v;this.t=v;this.vel=0;this.w0=w0;this.z=z}
+  set(t){this.t=t}update(dt){const n=Math.max(1,Math.ceil(dt/.008)),h=dt/n;for(let i=0;i<n;i++){const a=-this.w0*this.w0*(this.v-this.t)-2*this.z*this.w0*this.vel;this.vel+=a*h;this.v+=this.vel*h}return this.v}}
+/* sim bo‘ylab harakatlanuvchi zaryad nuqtalari; I>0 — pts yo‘nalishida */
+function gFlow(g,pts,I,t,c='#ffd27a'){if(!I||Math.abs(I)<1e-4)return;const segs=[];let L=0;for(let i=1;i<pts.length;i++){const d=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);segs.push([pts[i-1],pts[i],d]);L+=d}
+  const sp=Math.min(140,20+Math.abs(I)*18),gap=22,off=((t*sp)%gap)*Math.sign(I);g.fillStyle=c;
+  for(let s=(off+gap)%gap;s<L;s+=gap){let r=s;for(const[a,b,d]of segs){if(r<=d){g.beginPath();g.arc(a[0]+(b[0]-a[0])*r/d,a[1]+(b[1]-a[1])*r/d,2.2,0,7);g.fill();break}r-=d}}}
+/* kanvasda sudrash: hit(x,y)->true, move(x,y) */
+function drag(cv,hit,move,up){let on=false;const P=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*cv.clientWidth/r.width,(e.clientY-r.top)*cv.clientHeight/r.height]};
+  cv.addEventListener('pointerdown',e=>{const[x,y]=P(e);if(hit(x,y)){on=true;cv.setPointerCapture(e.pointerId);move(x,y);SFX.click(600,.03,.08)}});
+  cv.addEventListener('pointermove',e=>{const[x,y]=P(e);if(on){move(x,y)}else cv.style.cursor=hit(x,y)?'grab':'default'});
+  ['pointerup','pointercancel'].forEach(ev=>cv.addEventListener(ev,()=>{if(on&&up)up();on=false}))}
+function gLed(g,x,y,on,c='#5fd39a',label){g.fillStyle=on?c:'#2a3743';g.beginPath();g.arc(x,y,5,0,7);g.fill();if(on){g.fillStyle=c.replace(')',',.25)').replace('rgb','rgba');g.beginPath();g.arc(x,y,9,0,7);g.fill()}if(label)gLabel(g,label,x+10,y,'left',MUT,10)}
+function gTherm(g,x,y,h,frac,label){g.fillStyle='#1a242d';g.fillRect(x-4,y,8,h);g.fillStyle=REDC;g.fillRect(x-3,y+h*(1-frac),6,h*frac);g.beginPath();g.arc(x,y+h+6,8,0,7);g.fill();if(label)gLabel(g,label,x,y-10)}
+/* ================= 1-ish: elektrometrik kuchaytirgich ================= */
+LABS.push({id:1,short:'Elektrostatika',kind:'Faradey chashkasi, zaryad ishorasi',title:'Elektrometrik kuchaytirgich yordamida elektrostatikaning asosiy tajribalarini bajarish',
+goal:'Turli materiallar bir-biriga ishqalanganda hosil bo‘ladigan zaryadlarning ishorasini va miqdorini Faradey chashkasi hamda elektrometrik kuchaytirgich yordamida aniqlang; zaryadning saqlanish qonunini tekshiring.',
+build(main){const SER={teri:4.0+V(1,'t',-.4,.4),akril:2.0+V(1,'a',-.3,.3),polietilen:-1.5+V(1,'p',-.3,.3),pvc:-3.5+V(1,'v',-.4,.4)};
+  const NAME={teri:'Teri (charm)',akril:'Akril tayoqcha',polietilen:'Polietilen folga',pvc:'PVC tayoqcha',plast:'Induksion plastinka'},COL={pvc:'#7a7f86',akril:'#cfe2f3',teri:'#8a5a2a',polietilen:'#d9f0d9',plast:'#b8b8b8'};
+  const kq=V(1,'k',6,11);let q={teri:0,akril:0,polietilen:0,pvc:0,plast:0},Cin=1,U=0,power=false,rubT=0,rubPair=null,held=null,msgT='';
+  /* jismlarning stol ustidagi holati */let pos={pvc:[70,150],akril:[130,150],teri:[190,150],polietilen:[250,150],plast:[310,150]};const CUP={x:0,y:70,w:100,h:130};
+  const nd=new Needle(0,7,.3),cv=el('canvas'),lu=lcd('Multimetr (kuchaytirgich chiqishi)','V'),lq=lcd('Chashkadagi zaryad Q = C·U','nC');
+  const cap=select({label:'Kuchaytirgich kirish sig‘imi',options:[['1','1 nF'],['10','10 nF']],onchange:v=>{Cin=+v;SFX.click()}});
+  const A=select({label:'Birinchi jism',options:Object.keys(SER).map(k=>[k,NAME[k]]),value:'akril'}),B=select({label:'Ikkinchi jism',options:Object.keys(SER).map(k=>[k,NAME[k]]),value:'pvc'});
+  const J=journal([{h:'Chashkaga kiritilgan jism(lar)'},{h:'U, V',d:3},{h:'C, nF',d:0},{h:'Q, nC',d:2},{h:'Ishora',edit:true}]);
+  const inCup=()=>Object.keys(pos).filter(k=>pos[k][0]>CUP.x&&pos[k][0]<CUP.x+CUP.w&&pos[k][1]<CUP.y+CUP.h-10);
+  const cupQ=()=>inCup().reduce((s,k)=>s+q[k],0);
+  function rub(){const a=A.get(),b=B.get();if(a===b){msgT='Ikki xil jism tanlang.';return}rubPair=[a,b];rubT=1.2;SFX.click(300,.5,.05);
+    setTimeout(()=>{const d=SER[a]-SER[b],Q=kq*Math.tanh(d/2)*(1+.08*gauss());q[a]+=Q;q[b]-=Q;msgT=`${NAME[a]} va ${NAME[b]} ishqalandi: elektronlar ${SER[a]>SER[b]?NAME[a]:NAME[b]} dan ${SER[a]>SER[b]?NAME[b]:NAME[a]} ga o‘tdi.`},1200)}
+  function touchPlate(){const a=A.get();if(a==='plast')return;const t=q[a]*.6;q.plast+=t;q[a]-=t;msgT=`${NAME[a]} plastinkaga tegizildi — zaryadning bir qismi plastinkaga o‘tdi.`;SFX.click(500,.05,.1)}
+  function frame(dt,t){rubT=Math.max(0,rubT-dt);const Q=power?cupQ():0;U=Q*1e-9/(Cin*1e-9);nd.set(U);const Ud=nd.update(dt);
+    const{g,w,h}=fit(cv,300);g.clearRect(0,0,w,h);CUP.x=w*.52-50;gRail(g,w,275);
+    /* stol belgisi */gLabel(g,'jismlar — sichqoncha bilan sudrab chashkaga kiriting',190,40);
+    /* chashka */g.strokeStyle='#9fb3c4';g.lineWidth=3;g.beginPath();g.moveTo(CUP.x,CUP.y);g.lineTo(CUP.x,CUP.y+CUP.h);g.lineTo(CUP.x+CUP.w,CUP.y+CUP.h);g.lineTo(CUP.x+CUP.w,CUP.y);g.stroke();g.beginPath();g.moveTo(CUP.x-12,CUP.y-10);g.lineTo(CUP.x-12,CUP.y+CUP.h+8);g.lineTo(CUP.x+CUP.w+12,CUP.y+CUP.h+8);g.lineTo(CUP.x+CUP.w+12,CUP.y-10);g.stroke();gLabel(g,'Faradey chashkasi',CUP.x+CUP.w/2,CUP.y+CUP.h+28);
+    /* induksiyalangan zaryad belgilari chashka devorida */if(power&&Math.abs(Q)>.3){g.fillStyle=Q>0?BLUC:REDC;for(let k=0;k<Math.min(8,Math.abs(Q)/1.2);k++)gLabel(g,Q>0?'−':'+',CUP.x+4+(k%2)*(CUP.w-8),CUP.y+20+Math.floor(k/2)*28,'center',Q>0?BLUC:REDC,13)}
+    /* jismlar */for(const k of Object.keys(pos)){let[x,y]=pos[k];if(rubPair&&rubT>0&&rubPair.includes(k)){x+=Math.sin(t*40)*4}
+      g.fillStyle=COL[k];if(k==='plast')g.fillRect(x-14,y-4,28,8);else if(k==='teri'||k==='polietilen')g.fillRect(x-10,y-14,20,28);else g.fillRect(x-5,y-55,10,110);
+      const n=Math.min(6,Math.round(Math.abs(q[k])/1.5));for(let i=0;i<n;i++)gLabel(g,q[k]>0?'+':'−',x+(i%2?9:-9),y-40+i*14,'center',q[k]>0?REDC:BLUC,12);gLabel(g,NAME[k].split(' ')[0],x,y+66,'center',MUT,9)}
+    /* kuchaytirgich va multimetr */gWire(g,[[CUP.x+CUP.w+12,160],[w*.76,160],[w*.76,130]]);gBox(g,w*.76-45,80,90,50,power?'#2b3a47':'#1a242d');gLabel(g,'elektrometr',w*.76,94,'center',INK,10);gLabel(g,'kuchaytirgich',w*.76,108,'center',INK,10);gLed(g,w*.76-32,122,power);gLabel(g,'C = '+Cin+' nF',w*.76,66,'center');
+    gNeedle(g,w*.92,205,Ud/10,'',40);gLabel(g,fmt(power?noisy(Ud,.004,.004):0,2)+' V',w*.92,222,'center','#7CF0B0',11);gLabel(g,'multimetr ±10 V',w*.92,238);
+    gLabel(g,msgT,w/2,290,'center',MUT,11);lu.off(!power);lu.set(power?noisy(Ud,.004,.004):'— — —',3);lq.set(power?Q:0,2)}
+  drag(cv,(x,y)=>{held=Object.keys(pos).find(k=>Math.abs(pos[k][0]-x)<16&&Math.abs(pos[k][1]-y)<60);return !!held},(x,y)=>{if(held)pos[held]=[Math.max(20,Math.min(cv.clientWidth-20,x)),Math.max(60,Math.min(230,y))]},()=>{held=null});
+  main.append(el('div',{class:'rig'},el('div',{class:'bench'},cv,el('div',{class:'cap'},'Jismlarni sichqoncha bilan ushlab chashka ichiga kiriting yoki olib chiqing. Chashka devorida induksiyalangan zaryad va kuchaytirgich chiqishi (U = Q/C) ko‘rinadi.')),el('div',{class:'side'},lu.root,lq.root)),
+    el('div',{class:'card',style:'margin-top:14px'},el('div',{class:'cols'},A.root,B.root,cap.root),
+      el('div',{class:'btns'},button('Kuchaytirgichni yoqish/o‘chirish',()=>{power=!power;SFX.relay()}),button('Jismlarni bir-biriga ishqalash',rub),button('Birinchi jismni plastinkaga tegizish',touchPlate,'ghost'),button('Barcha jismlarni zaryadsizlantirish (olov / yerga ulash)',()=>{for(const k in q)q[k]=0;msgT='Barcha jismlar zaryadsizlantirildi.'},'danger'),button('Jadvalga yozish',()=>J.add([inCup().map(k=>NAME[k]).join(' + ')||'bo‘sh',nd.v,Cin,cupQ(),''])))),
+    ...section('Bajarish tartibi',steps(['Kuchaytirgichni yoqing. Barcha jismlarni zaryadsizlantiring, chashka bo‘sh ekanini tekshiring (U = 0).','Akril va PVC tayoqchalarni bir-biriga ishqalang. Avval PVC ni, so‘ng akrilni chashkaga sudrab kiriting va U ni yozing. Keyin ikkalasini birga kiriting. Natijani 1-jadvalga yozing.','Zaryadsizlantirib, akrilni teri bilan, PVC ni polietilen bilan ishqalang va har bir jismning zaryad ishorasini aniqlang. Triboelektrik qatorni tuzing.','Kirish sig‘imini 10 nF ga o‘tkazib, bir xil zaryad uchun U qanday o‘zgarishini tekshiring. Zaryad Q = C·U o‘zgaradimi?','Induksiya orqali zaryad uzatish: zaryadlangan tayoqchani plastinkaga tegizib, plastinkani chashkaga kiriting.','Xulosa: ishqalanishda hosil bo‘lgan zaryadlar teng miqdorli va qarama-qarshi ishorali ekanini tajriba bilan ko‘rsating.'])),
+    ...section('O‘lchash jurnali',J.root),
+    ...section('Natijani tekshirish',verify([{label:'Akril–PVC juftligi uchun |Q|, bitta ishqalashdan keyin',unit:'nC',truth:()=>kq*Math.tanh((SER.akril-SER.pvc)/2),tol:.15}])),
+    theory('Qisqacha nazariya','<p>Ikki jism ishqalanganda elektronlar bir jismdan ikkinchisiga o‘tadi: elektron yo‘qotgan jism musbat, qabul qilgan jism manfiy zaryadlanadi; zaryadlar miqdori teng. Faradey chashkasiga kiritilgan jism chashka devorida unga teng zaryad induksiyalaydi; kuchaytirgich (kirish qarshiligi ≈ 10¹³ Om) chashka va sig‘im orasidagi kuchlanish U = Q/C ni o‘lchaydi.</p>'));
+  loop(frame)}});
+
+/* ================= 2-ish: elektrostatik maydon (vanna) ================= */
+LABS.push({id:2,short:'Elektrostatik maydon',kind:'ekvipotensial chiziqlar',title:'Elektrostatik maydonni o‘rganish',
+goal:'Suvli vannada turli shakldagi elektrodlar hosil qilgan maydonning ekvipotensial chiziqlarini zond va galvanometr yordamida nuqtama-nuqta topib chizing; kuch chiziqlari bilan bog‘lanishini tushuntiring.',
+build(main){const NX=96,NY=64,U0=10;let phi=null,cfg='plates',mx=null,my=null,showMap=false;
+  const cv=el('canvas'),gc=el('canvas',{style:'height:90px'}),lg=lcd('Galvanometr toki (zond potensiali − berilgan potensial)','µA'),lp=lcd('Zond koordinatasi x; y','sm'),nd=new Needle(0,10,.4);let Icur=0;
+  const shape=select({label:'Elektrodlar shakli',options:[['plates','Ikki parallel tekislik'],['pointplate','Nuqtaviy zaryad va tekislik'],['points','Ikki nuqtaviy zaryad'],['ring','Nuqta va halqa (Faradey qafasi)']],onchange:v=>{cfg=v;solve();draw()}});
+  const n=slider({label:'Potensiometr: zond potensiali φₙ = n·U₀/10',min:1,max:9,step:1,value:5,oninput:draw});
+  const J=journal([{h:'Elektrodlar'},{h:'n'},{h:'φₙ, V',d:1},{h:'x, sm',d:1},{h:'y, sm',d:1}],{empty:'Jurnal bo‘sh. Vannada galvanometr nolni ko‘rsatadigan nuqtani topib, sichqonchani bosing.'});
+  function fixed(i,j){const x=i/(NX-1),y=j/(NY-1);
+    if(cfg==='plates'){if(Math.abs(x-.22)<.012&&y>.15&&y<.85)return U0;if(Math.abs(x-.78)<.012&&y>.15&&y<.85)return 0}
+    if(cfg==='pointplate'){if(Math.hypot(x-.3,(y-.5)*NY/NX)<.03)return U0;if(Math.abs(x-.8)<.012&&y>.1&&y<.9)return 0}
+    if(cfg==='points'){if(Math.hypot(x-.3,(y-.5)*NY/NX)<.03)return U0;if(Math.hypot(x-.7,(y-.5)*NY/NX)<.03)return 0}
+    if(cfg==='ring'){if(Math.hypot(x-.5,(y-.5)*NY/NX)<.025)return U0;const r=Math.hypot(x-.5,(y-.5)*NY/NX);if(r>.2&&r<.225)return 0}
+    return null}
+  function solve(){phi=new Float32Array(NX*NY);const fx=new Float32Array(NX*NY).fill(NaN);for(let j=0;j<NY;j++)for(let i=0;i<NX;i++){const v=fixed(i,j);if(v!=null){fx[j*NX+i]=v;phi[j*NX+i]=v}}
+    for(let it=0;it<2500;it++){for(let j=0;j<NY;j++)for(let i=0;i<NX;i++){const k=j*NX+i;if(!isNaN(fx[k]))continue;
+      const l=i?phi[k-1]:phi[k+1],r=i<NX-1?phi[k+1]:phi[k-1],u=j?phi[k-NX]:phi[k+NX],d=j<NY-1?phi[k+NX]:phi[k-NX];phi[k]=.25*(l+r+u+d)}}}
+  const P=(x,y)=>{const i=Math.max(0,Math.min(NX-1,x)),j=Math.max(0,Math.min(NY-1,y));const i0=Math.floor(i),j0=Math.floor(j),fx=i-i0,fy=j-j0,q=(a,b)=>phi[Math.min(NY-1,b)*NX+Math.min(NX-1,a)];return (1-fx)*(1-fy)*q(i0,j0)+fx*(1-fy)*q(i0+1,j0)+(1-fx)*fy*q(i0,j0+1)+fx*fy*q(i0+1,j0+1)};
+  function draw(){const{g,w,h}=fit(cv,420);const X0=40,Y0=20,W=w-80,H=h-70,sx=W/(NX-1),sy=H/(NY-1);g.clearRect(0,0,w,h);
+    g.fillStyle='#10202c';g.fillRect(X0,Y0,W,H);
+    if(showMap){for(let j=0;j<NY-1;j++)for(let i=0;i<NX-1;i++){const v=phi[j*NX+i]/U0;g.fillStyle=`rgba(${Math.round(255*v)},${Math.round(90*(1-Math.abs(2*v-1)))},${Math.round(255*(1-v))},.45)`;g.fillRect(X0+i*sx,Y0+j*sy,sx+1,sy+1)}
+      /* ekvipotensial chiziqlar */g.strokeStyle='rgba(255,255,255,.75)';g.lineWidth=1;for(let j=0;j<NY-1;j++)for(let i=0;i<NX-1;i++){const a=phi[j*NX+i],b=phi[j*NX+i+1],c=phi[(j+1)*NX+i];for(let k=1;k<10;k++){const lv=k;if((a-lv)*(b-lv)<0){g.beginPath();g.moveTo(X0+(i+(lv-a)/(b-a))*sx,Y0+j*sy);g.lineTo(X0+(i+(lv-a)/(b-a))*sx,Y0+(j+1)*sy);g.stroke()}if((a-lv)*(c-lv)<0){g.beginPath();g.moveTo(X0+i*sx,Y0+(j+(lv-a)/(c-a))*sy);g.lineTo(X0+(i+1)*sx,Y0+(j+(lv-a)/(c-a))*sy);g.stroke()}}}}
+    /* to‘r */g.strokeStyle='rgba(255,255,255,.08)';for(let i=0;i<=NX;i+=4){g.beginPath();g.moveTo(X0+i*sx,Y0);g.lineTo(X0+i*sx,Y0+H);g.stroke()}for(let j=0;j<=NY;j+=4){g.beginPath();g.moveTo(X0,Y0+j*sy);g.lineTo(X0+W,Y0+j*sy);g.stroke()}
+    for(let i=0;i<=24;i+=4)gLabel(g,String(i),X0+i*4*sx,Y0+H+12);for(let j=0;j<=16;j+=4)gLabel(g,String(j),X0-14,Y0+H-j*4*sy);gLabel(g,'x, sm',X0+W+22,Y0+H+12);gLabel(g,'y, sm',X0-14,Y0-8);
+    /* elektrodlar */for(let j=0;j<NY;j++)for(let i=0;i<NX;i++){const v=fixed(i,j);if(v!=null){g.fillStyle=v>0?REDC:BLUC;g.fillRect(X0+i*sx-1,Y0+j*sy-1,sx+2,sy+2)}}
+    gLabel(g,'qizil elektrod: +U₀ = 10 V',X0+W*.25,Y0+H+28,'center',REDC);gLabel(g,'ko‘k elektrod: 0 V',X0+W*.75,Y0+H+28,'center',BLUC);
+    /* jurnal nuqtalari */J.rows.forEach(r=>{gDot(g,X0+r[3]/24*W,Y0+H-r[4]/16*H,'#7CF0B0',3)});
+    if(mx!=null){gDot(g,X0+mx/24*W,Y0+H-my/16*H,'#fff',4);const v=P(mx/24*(NX-1),(16-my)/16*(NY-1));Icur=(v-n.get())*4.2;lp.set(fmt(mx,1)+'; '+fmt(my,1))}
+    cv._area={X0,Y0,W,H}}
+  cv.addEventListener('pointermove',e=>{const r=cv.getBoundingClientRect(),a=cv._area;if(!a)return;const x=(e.clientX-r.left-a.X0*r.width/cv.clientWidth)/(a.W*r.width/cv.clientWidth)*24,y=16-(e.clientY-r.top-a.Y0*r.height/cv.clientHeight)/(a.H*r.height/cv.clientHeight)*16;if(x<0||x>24||y<0||y>16){mx=null;return}mx=Math.round(x*5)/5;my=Math.round(y*5)/5;draw()});
+  function gframe(dt){nd.set(Icur);const v=nd.update(dt),{g,w,h}=fit(gc,90);g.clearRect(0,0,w,h);gNeedle(g,w/2,h-6,v/20,'',44);gLabel(g,'G: '+fmt(noisy(v,.01,.01),2)+' µA',w/2+70,h-30,'left','#7CF0B0',11);lg.set(noisy(v,.01,.01),2)}
+  cv.addEventListener('click',()=>{if(mx==null)return;SFX.beep();J.add([shape.root.querySelector('select').selectedOptions[0].textContent,n.get(),n.get(),mx,my])});
+  J.onchange=draw;
+  main.append(el('div',{class:'rig'},el('div',{class:'bench'},cv,el('div',{class:'cap'},'Vanna tubida 24×16 sm li koordinata to‘ri. Zond — sichqoncha kursori; galvanometr zond potensiali bilan potensiometrdan berilgan potensial farqiga proporsional tok ko‘rsatadi. Nol ko‘rsatganda nuqtani bosib jurnalga yozing.')),el('div',{class:'side'},el('div',{class:'bench'},gc),lg.root,lp.root,el('div',{class:'card'},shape.root,n.root,el('div',{class:'btns'},button('Hisoblangan maydonni ko‘rsatish / yashirish',()=>{showMap=!showMap;draw()},'ghost'))))),
+    ...section('Bajarish tartibi',steps(['Elektrodlar shaklini tanlang. Potensiometrni n = 5 (φ = 5 V) holatiga qo‘ying.','Zondni vanna bo‘ylab yurgizib, galvanometr nolni ko‘rsatadigan kamida 8–10 nuqtani toping va har birini bosib jurnalga yozing (nuqtalar vannada yashil rangda belgilanadi).','n = 2, 3, 7, 8 uchun takrorlang. Har bir n uchun nuqtalar to‘plami bitta ekvipotensial chiziqni beradi.','Jurnaldan nusxa olib, millimetrli qog‘ozda (yoki Excelda) barcha nuqtalarni chizing va ekvipotensial chiziqlarni silliq egri chiziq bilan birlashtiring. Ularga tik qilib kuch chiziqlarini chizing.','“Hisoblangan maydonni ko‘rsatish” bilan natijangizni Laplas tenglamasining sonli yechimi bilan taqqoslang.','Ishni boshqa ikki elektrod shakli uchun takrorlang. Faradey qafasi (halqa) ichida maydon qanday?'])),
+    ...section('O‘lchash jurnali',J.root),
+    theory('Qisqacha nazariya','<p>Kuchlanganlik potensial gradiyentiga teng va teskari yo‘nalgan: <span class="f">E = −grad φ</span>. Shuning uchun kuch chiziqlari ekvipotensial sirtlarga tik. Zaryadsiz sohada potensial Laplas tenglamasini qanoatlantiradi: Δφ = 0; vannadagi suvda tok oqimi elektrostatik maydon tasvirini beradi (elektrodlar — ekvipotensial sirtlar).</p>'));
+  solve();draw();onResize(draw);loop(gframe)}});
+
+/* ================= 3-ish: sig‘im (zaryad-razryad, integrator) ================= */
+LABS.push({id:3,short:'Kondensator sig‘imi',kind:'tok integratori',title:'Kondensator sig‘imini zaryad-razryad usuli bilan aniqlash',
+goal:'Tok integratorini etalon kondensator yordamida darajalang va noma’lum kondensatorning sig‘imini kondensator zaryadi orqali aniqlang.',
+build(main){const Cx=V(3,'cx',.82,1.25),k=V(3,'k',.12,.22);let on=false,S='left',Ui=0,UiT=0,Uc=0,sw=0,I=0,peak=0;
+  const n1=new Needle(0,12,.5),n2=new Needle(0,6,.6),cv=el('canvas'),l1=lcd('V₁ — kondensatordagi kuchlanish','V'),l2=lcd('V₂ — integrator chiqishi (maksimum)','V');
+  const E3=slider({label:'E3 manba kuchlanishi',min:0,max:15,step:.05,value:1,unit:'V',nudges:[.05,.5],nudgeLabel:x=>fmt(x,2)});
+  const C=select({label:'Kondensator',options:[['0.68','Etalon C_E = 0,68 µF'],['x','Noma’lum C_x'],['0.47','Nazorat C = 0,47 µF']],onchange:()=>SFX.click()});
+  const tc=check('S1: katta integrallash vaqti (yuqori holat)',true,()=>SFX.click());
+  const J=journal([{h:'Kondensator'},{h:'U, V',d:3},{h:'U_i, V',d:3},{h:'U_i/U',edit:true},{h:'C, µF',edit:true}]);
+  const cap=()=>C.get()==='x'?Cx:+C.get();
+  function frame(dt,t){sw+=(S==='left'?-1:1)*dt*8;sw=Math.max(-1,Math.min(1,sw));
+    if(on&&S==='left'){const dU=(E3.get()-Uc)*Math.min(1,dt*6);Uc+=dU;I=dU/dt*cap()*1e-3}else{I=0}
+    if(!on){Uc=0;UiT=0;Ui=0}
+    /* integrator: chiqish maqsadga tez chiqadi, keyin sekin drift */if(on){Ui+=(UiT-Ui)*Math.min(1,dt*10);UiT+=(tc.get()?.0015:.006)*dt;peak=Math.max(peak,Ui)}
+    n1.set(Uc);n2.set(Ui);const u1=n1.update(dt),u2=n2.update(dt);
+    const{g,w,h}=fit(cv,230);g.clearRect(0,0,w,h);const y=120;
+    gBat(g,60,y,'E3');gWire(g,[[60,y-14],[60,40],[180,40]]);gWire(g,[[60,y+14],[60,200],[w-60,200]]);
+    gDot(g,188,40,'#9fb3c4');gDot(g,212,40,'#9fb3c4');gDot(g,224,52,'#9fb3c4');g.strokeStyle='#9fb3c4';g.lineWidth=2;g.beginPath();g.moveTo(200,40);const ang=(sw+1)/2*Math.PI/4;g.lineTo(200-14*Math.cos(ang)*(sw<0?1:-1),40+14*Math.sin(ang)*(sw<0?0:1)+(sw<0?0:0));g.stroke();gLabel(g,'S',200,22);
+    gWire(g,[[212,40],[300,40],[300,y-14]]);gCap(g,300,y,'C',true);gWire(g,[[300,y+14],[300,200]]);gMeter(g,140,y,'V₁',fmt(u1,2),'V');gWire(g,[[140,y-22],[140,40]]);gWire(g,[[140,y+22],[140,200]]);
+    gWire(g,[[224,52],[224,80],[380,80]]);gRes(g,420,80,60,'R = 470 kOm');gWire(g,[[450,80],[520,80]]);gBox(g,520,50,110,60,on?'#2b3a47':'#1a242d');gLabel(g,'Integrator',575,68,'center',INK);gLed(g,535,98,on,'#5fd39a','KH');gWire(g,[[575,110],[575,200]]);
+    gWire(g,[[630,80],[w-60,80],[w-60,y-22]]);gMeter(g,w-60,y,'V₂',fmt(u2,2),'V');gWire(g,[[w-60,y+22],[w-60,200]]);
+    if(on&&S==='left')gFlow(g,[[60,40],[180,40],[212,40],[300,40],[300,y-14]],I*4,t);if(on&&S==='right'&&I<0)gFlow(g,[[300,y-14],[300,40],[224,52],[224,80],[520,80]],-I*4,t);
+    gLabel(g,on?'Quvvat: ВКЛ':'Quvvat: ВЫКЛ',w*.5,220,'center',on?'#7CF0B0':REDC);gLed(g,w*.5-70,220,on);
+    l1.set(noisy(u1,.004,.005),3);l2.set(noisy(u2,.004,.004),3)}
+  function toggle(){if(!on){SFX.click(300);return}SFX.relay();if(S==='left'){S='right';const q=cap()*Uc,sat=tc.get()?20:6;UiT=Math.min(sat,UiT+q/k*(tc.get()?1:3.2)*(1+.004*gauss()));I=-q;setTimeout(()=>I=0,900);Uc=0}else{S='left'}}
+  main.append(el('div',{class:'rig'},el('div',{class:'bench'},cv,el('div',{class:'cap'},'S chapda — kondensator E3 dan zaryadlanadi (V₁); S o‘ngda — kondensator integrator orqali razryadlanadi va o‘tgan zaryad V₂ da qayd etiladi. Integrator chiqishi sekin “suzadi” — maksimumni darhol o‘qing, har o‘lchashdan oldin KH ni bosing.')),el('div',{class:'side'},l1.root,l2.root,el('div',{class:'card'},el('div',{class:'btns',style:'margin:0 0 10px'},button('ВКЛ / ВЫКЛ',()=>{on=!on;Ui=UiT=0;SFX.relay()}),button('KH — Сброс',()=>{Ui=UiT=0;peak=0;SFX.click()},'ghost'),button('S kalitini o‘tkazish',toggle)),E3.root,C.root,tc.root,el('div',{class:'btns'},button('Jadvalga yozish',()=>J.add([C.root.querySelector('select').selectedOptions[0].textContent,E3.get(),n2.v,'',''])))))),
+    ...section('Bajarish tartibi',steps(['Quvvatni yoqing, etalon C_E ni tanlang. KH ni bosing, S chapda bo‘lsin, E3 bilan zaryadlash kuchlanishini 2 V dan oshirmay o‘rnating.','S ni o‘ngga o‘tkazing — V₂ maksimal qiymatni ko‘rsatadi. U_i 8–10 V dan oshmasligi kerak; kerak bo‘lsa U ni kamaytiring va ish davomida uni o‘zgartirmang.','Har o‘lchashdan oldin KH ni bosib, S ni chapga qaytaring. 5 marta o‘lchab, o‘rtacha U_i/U ni toping va darajalash doimiysini hisoblang: <span class="f">k = C_E · U / U_i</span>.','Noma’lum C_x uchun 5 marta o‘lchang: <span class="f">C_x = k · U_i / U</span>.','Nazorat kondensatori (0,47 µF) bilan darajalashning to‘g‘riligini tekshiring.','KH bosilmasdan ikki marta razryadlansa nima bo‘ladi? Tajribada tekshiring va tushuntiring. S1 ni pastki holatga o‘tkazib, integrator sezgirligi qanday o‘zgarishini kuzating.'])),
+    ...section('O‘lchash jurnali',J.root),
+    ...section('Natijani tekshirish',verify([{label:'Noma’lum sig‘im C_x',unit:'µF',truth:()=>Cx,tol:.03},{label:'Darajalash doimiysi k = C_E·U/U_i',unit:'µF',truth:()=>k,tol:.03}])),
+    theory('Qisqacha nazariya','<p>Kondensator zaryadi q = C·U. Integrator chiqishidagi kuchlanish undan o‘tgan zaryadga proporsional: U_i = q/k. Etalon kondensator bilan k topilib, so‘ng noma’lum sig‘im hisoblanadi. Zaryad integrator sig‘imida to‘planib boradi, shuning uchun har o‘lchashdan oldin uni nollash (KH) zarur.</p>'));
+  loop(frame)}});
+
+/* ================= 4-ish: Uitston ko‘prigi ================= */
+LABS.push({id:4,short:'Uitston ko‘prigi',kind:'nol usuli, qarshilik',title:'Uitston ko‘prigidan foydalanib qarshiliklarni aniqlash',
+goal:'Sim ko‘prigida nol usuli bilan 10 Om, 100 Om va 1 kOm li rezistorlarning haqiqiy qarshiligini aniqlang; rezistorlarning ketma-ket va parallel ulanishini tekshiring.',
+build(main){const RX={'10':10*(1+V(4,'a',-.02,.02)),'100':100*(1+V(4,'b',-.02,.02)),'1000':1000*(1+V(4,'c',-.02,.02))};
+  const cv=el('canvas'),lg=lcd('Galvanometr','mA'),lr=lcd('Dekada R','Om'),nd=new Needle(0,9,.35);let xlG=80,xrG=600;
+  const rx=select({label:'Noma’lum qarshilik R_x',options:[['10','O‘lchash rezistori 10 Om'],['100','O‘lchash rezistori 100 Om'],['1000','O‘lchash rezistori 1 kOm'],['s','10 Om + 100 Om ketma-ket'],['p','100 Om ∥ 1 kOm parallel']],onchange:draw});
+  const R=[slider({label:'Dekada: ×100 Om',min:0,max:10,step:1,value:0,oninput:draw}),slider({label:'Dekada: ×10 Om',min:0,max:10,step:1,value:0,oninput:draw}),slider({label:'Dekada: ×1 Om',min:0,max:10,step:1,value:5,oninput:draw}),slider({label:'Dekada: ×0,1 Om',min:0,max:10,step:1,value:0,oninput:draw})];
+  const l1=slider({label:'Siljuvchi kontakt l₁',min:1,max:99,step:.1,value:50,unit:'sm',nudges:[.1,1],nudgeLabel:x=>fmt(x,1),oninput:draw});
+  const U=slider({label:'Manba kuchlanishi U',min:0,max:2,step:.1,value:1,unit:'V',oninput:draw});
+  const rng=select({label:'Galvanometr diapazoni',options:[['10','10 mA'],['1','1 mA'],['0.1','0,1 mA (eng sezgir)']],value:'1',onchange:draw});
+  const J=journal([{h:'R_x (nominal)'},{h:'R, Om',d:1},{h:'l₁, sm',d:1},{h:'l₂, sm',d:1},{h:'R_x = R·l₁/l₂, Om',edit:true}]);
+  const Rdec=()=>R[0].get()*100+R[1].get()*10+R[2].get()+R[3].get()*.1;
+  const Rtrue=()=>{const v=rx.get();if(v==='s')return RX['10']+RX['100'];if(v==='p')return RX['100']*RX['1000']/(RX['100']+RX['1000']);return RX[v]};
+  function Ig(){/* 1 m sim, 10 Om; galvanometr 50 Om */const Rw=10,a=l1.get()/100*Rw,b=Rw-a,Rx=Rtrue(),Rd=Rdec()||1e-3,u=U.get();
+    /* tugun potensiallari: ko‘prik A: Rx-Rd shoxobcha, B: sim */const Ra=Rx,Rb=Rd,Rg=50;
+    // Thevenin
+    const Vth=u*(Rb/(Ra+Rb)-b/(a+b)),Rth=Ra*Rb/(Ra+Rb)+a*b/(a+b);return Vth/(Rth+Rg)*1e3}
+  function draw(dt=0,t=0){const{g,w,h}=fit(cv,250);g.clearRect(0,0,w,h);const y0=60,y1=190,xl=80,xr=w-80;xlG=xl;xrG=xr;
+    gWire(g,[[xl,y1],[xr,y1]],'#9fb3c4',4);gLabel(g,'sim 1 m',w/2,y1+18);for(let i=0;i<=10;i++){g.fillStyle=MUT;g.fillRect(xl+(xr-xl)*i/10,y1-6,1,12);gLabel(g,String(i*10),xl+(xr-xl)*i/10,y1+32,'center',MUT,10)}
+    const xc=xl+(xr-xl)*l1.get()/100;gDot(g,xc,y1,REDC,5);gLabel(g,'l₁',(xl+xc)/2,y1-16,'center',REDC);gLabel(g,'l₂',(xc+xr)/2,y1-16,'center',REDC);
+    gWire(g,[[xl,y1],[xl,y0],[w*.3,y0]]);gRes(g,w*.3+40,y0,70,'R_x');gWire(g,[[w*.3+75,y0],[w*.7-75,y0]]);gRes(g,w*.7-40,y0,70,'R (dekada)');gWire(g,[[w*.7-5,y0],[xr,y0],[xr,y1]]);
+    gWire(g,[[w/2,y0],[w/2,y1-70]]);gMeter(g,w/2,y1-48,'G',null,null,18);gWire(g,[[w/2,y1-30],[w/2,y1-14],[xc,y1-14],[xc,y1]]);
+    gWire(g,[[xl,y1],[xl,y1+40],[w/2-16,y1+40]]);gBat(g,w/2,y1+40,null,false);gWire(g,[[w/2+16,y1+40],[xr,y1+40],[xr,y1]]);gLabel(g,'U = '+fmt(U.get(),1)+' V',w/2,y1+58);
+    const I=Ig(),r=+rng.get();nd.set(Math.max(-1.1,Math.min(1.1,I/r)));const v=nd.update(dt);gNeedle(g,w-60,h-10,v,'',40);gFlow(g,[[w/2,y1+40],[xr,y1+40],[xr,y1]],U.get()*2,t);gFlow(g,[[xl,y1],[xl,y0],[w/2,y0]],U.get()*2,t);gFlow(g,[[w/2,y0],[w/2,y1-70]],I*3,t);lg.set(Math.abs(v)>1.05?(v>0?'> +':'< −')+r:fmt(noisy(v*r,0,.002*r),r<1?3:2));lr.set(Rdec(),1)}
+  main.append(el('div',{class:'rig'},el('div',{class:'bench'},cv,el('div',{class:'cap'},'Galvanometr strelkasi muvozanatda nolda turadi. Diapazon qanchalik sezgir bo‘lsa, nolni shunchalik aniq topish mumkin, lekin diapazondan tashqarida strelka chetga tiralib qoladi.')),el('div',{class:'side'},lg.root,lr.root)),
+    el('div',{class:'card',style:'margin-top:14px'},el('div',{class:'cols'},rx.root,U.root,rng.root,l1.root,R[0].root,R[1].root,R[2].root,R[3].root),el('div',{class:'btns'},button('Jadvalga yozish',()=>J.add([rx.root.querySelector('select').selectedOptions[0].textContent,Rdec(),l1.get(),100-l1.get(),''])))),
+    ...section('Bajarish tartibi',steps(['<b>l₁, l₂ ni tanlab muvozanatlash.</b> R_x = 10 Om ni tanlang, dekadada R = 5 Om, U = 1 V. Siljuvchi kontaktni surib, galvanometr nolni ko‘rsatadigan l₁ ni toping (diapazonni 10 mA → 1 → 0,1 mA tartibida sezgirlashtirib boring). Jadvalga yozing.','R = 10, 15, 20, 30 Om uchun takrorlang. Har bir satr uchun <span class="f">R_x = R · l₁ / l₂</span> ni hisoblang. Qaysi holatda (l₁ ≈ l₂) natija aniqroq? Nima uchun?','100 Om va 1 kOm rezistorlar uchun takrorlang (R ni mos ravishda 50–300 Om va 500–3000 Om oralig‘ida tanlang).','<b>Dekadani sozlab muvozanatlash.</b> Kontaktni aniq 50,0 sm ga qo‘ying va dekada bilan nolga keltiring: R_x = R.','Ketma-ket va parallel ulanishlarni o‘lchab, hisoblangan qiymatlar bilan taqqoslang.','Har bir rezistor uchun nominaldan chetlanishni foizda toping (zavod bardoshligi ±2 %).'])),
+    ...section('O‘lchash jurnali',J.root),
+    ...section('Natijani tekshirish',verify([{label:'10 Om rezistorning haqiqiy qarshiligi',unit:'Om',truth:()=>RX['10'],tol:.006},{label:'100 Om rezistorning haqiqiy qarshiligi',unit:'Om',truth:()=>RX['100'],tol:.006},{label:'1 kOm rezistorning haqiqiy qarshiligi',unit:'Om',truth:()=>RX['1000'],tol:.006}])),
+    theory('Qisqacha nazariya','<p>Muvozanatda galvanometr orqali tok oqmaydi, ko‘prikning ikki shoxobchasida potensiallar teng: <span class="f">R_x / R = l₁ / l₂</span>. Natija manba kuchlanishiga bog‘liq emas (nol usuli). Eng kichik xatolik l₁ = l₂ = 50 sm da: bunda ΔR_x/R_x = ΔR/R + 2Δl/l.</p>'));
+  draw();onResize(draw)}});
+/* ================= 5-ish: R(T) ================= */
+LABS.push({id:5,short:'Qarshilik va harorat',kind:'metall, yarimo‘tkazgich',title:'O‘tkazgich va yarimo‘tkazgich qarshiligining haroratga bog‘liqligini aniqlash',
+goal:'Metall namunaning qarshilik termik koeffitsiyentini va yarimo‘tkazgichning taqiqlangan zona kengligini qizdirish moduli yordamida aniqlang.',
+build(main){const AL={cu:.00393,ni:.0060,pt:.00385},R0={cu:V(5,'r1',8,14),ni:V(5,'r2',20,35),pt:V(5,'r3',90,110)},EG=V(5,'eg',.55,.95),RS0=V(5,'rs',1500,4000);
+  let T=22,heat=false,cool=false,sample='cu';
+  const cv=el('canvas'),lt=lcd('Namuna harorati','°C'),lr=lcd('Qarshilik R','Om');
+  const S=select({label:'Namuna',options:[['cu','Metall: mis sim'],['ni','Metall: nikel sim'],['pt','Metall: platina (Pt100)'],['sc','Yarimo‘tkazgich: termistor']],onchange:v=>{sample=v}});
+  const Tset=slider({label:'Belgilangan harorat («Установить»)',min:25,max:80,step:1,value:80,unit:'°C'});
+  const J=journal([{h:'Namuna'},{h:'t, °C',d:1},{h:'T, K',d:1},{h:'R, Om',d:2},{h:'1/T, K⁻¹',edit:true},{h:'ln R',edit:true}]);
+  const Rv=()=>{const TK=T+273.15;if(sample==='sc')return RS0*Math.exp(EG*QE/(2*1.380649e-23)*(1/TK-1/293.15));return R0[sample]*(1+AL[sample]*T)};
+  function frame(dt){if(heat){T+=dt*1.6*(Tset.get()-T>2?1:.25);if(T>=Tset.get()){heat=false}}if(cool){T-=dt*1.2;if(T<=22){T=22;cool=false}}
+    const{g,w,h}=fit(cv,200);g.clearRect(0,0,w,h);gBox(g,40,50,220,110,'#2b3a47');gLabel(g,'Qizdirish moduli',150,40,'center',INK);
+    const hot=Math.min(1,(T-22)/60);g.fillStyle=`rgb(${80+150*hot},${60+30*(1-hot)},${60})`;g.fillRect(70,80,160,50);gLabel(g,'namuna: '+S.root.querySelector('select').selectedOptions[0].textContent.split(': ')[1],150,105,'center','#fff',11);
+    gLed(g,80,150,heat,'#ff6b5a','НАГРЕВ');gLed(g,170,150,cool,'#4F9CF5','ОХЛАЖДЕНИЕ');gTherm(g,290,60,90,(T-20)/65,'t');
+    gWire(g,[[260,90],[330,90]]);gMeter(g,360,90,'Ω',fmt(Rv(),1),'',26);gWire(g,[[260,120],[330,120]]);gMeter(g,360,150,'t°',fmt(T,1),'°C',24);
+    gBox(g,w-150,50,120,110,'#1a242d');gLabel(g,'noutbuk',w-90,40,'center',INK);gLabel(g,'Temperature',w-90,90,'center','#7CF0B0',10);gLabel(g,'characteristics',w-90,104,'center','#7CF0B0',10);
+    lt.set(noisy(T,0,.05),1);lr.set(noisy(Rv(),.002),2);
+  }
+  const pc=el('canvas');const gp=()=>{    const pts=J.rows.filter(r=>r[0]===S.root.querySelector('select').selectedOptions[0].textContent).map(r=>[r[1],r[3]]);
+    plot(pc,{series:[{pts,color:'#c0182b'}],xlabel:'t, °C',ylabel:'R, Om',ymin:0,hover:(a,b)=>`t = ${fmt(a,1)} °C;  R = ${fmt(b,2)} Om`})
+};J.onchange=gp;setTimeout(gp,50);onResize(gp);
+  main.append(el('div',{class:'rig'},el('div',{class:'bench'},cv,el('div',{class:'cap'},'Vaqt tezlashtirilgan: namuna taxminan 1 daqiqada 22 dan 80 °C gacha qiziydi. Nuqtalarni har 5 °C da qo‘shing.')),el('div',{class:'side'},lt.root,lr.root,el('div',{class:'card'},S.root,Tset.root,el('div',{class:'btns'},button('Qizdirish',()=>{heat=true;cool=false;SFX.relay()}),button('Выкл / sovutish',()=>{heat=false;cool=true;SFX.relay()},'ghost'),button('Nuqta qo‘shish',()=>J.add([S.root.querySelector('select').selectedOptions[0].textContent,T,T+273.15,Rv(),'',''])))))),
+    ...section('Grafik R(t) — tanlangan namuna uchun',el('div',{class:'card'},pc)),
+    ...section('Bajarish tartibi',steps(['Metall namunani (mis) tanlang. Xona haroratida nuqta qo‘shing, so‘ng «Qizdirish»ni bosib, har 5 °C da (30, 35, … 80 °C) nuqta qo‘shing.','R(t) grafigini chizing; to‘g‘ri chiziqni t = 0 °C gacha davom ettirib R₀ ni toping. Qiyalik ΔR/Δt dan termik koeffitsiyentni hisoblang: <span class="f">α = (ΔR/Δt) / R₀</span>. Jadvaliy qiymat bilan taqqoslang (mis 3,9·10⁻³ K⁻¹).','Sovutib, nikel va platina uchun takrorlang.','Termistorni tanlang va 22–80 °C oralig‘ida nuqtalar oling. Har bir nuqta uchun 1/T va ln R ni hisoblang, <span class="f">ln R = f(1/T)</span> grafigini chizing.','Qiyalikdan taqiqlangan zona kengligini toping: <span class="f">ΔE = 2k · Δ(ln R)/Δ(1/T)</span>, so‘ng eV ga o‘tkazing (1 eV = 1,602·10⁻¹⁹ J).','Metall va yarimo‘tkazgichda qarshilikning haroratga bog‘lanish mexanizmini taqqoslang.'])),
+    ...section('O‘lchash jurnali',J.root),
+    ...section('Natijani tekshirish',verify([{label:'Mis uchun α',unit:'K⁻¹',truth:()=>AL.cu,tol:.08},{label:'Nikel uchun α',unit:'K⁻¹',truth:()=>AL.ni,tol:.08},{label:'Termistorning ΔE si',unit:'eV',truth:()=>EG,tol:.06}])),
+    theory('Qisqacha nazariya','<p>Metallda harorat ortganda panjara tebranishlari elektronlarni ko‘proq sochadi: <span class="f">R = R₀(1 + αt)</span>. Yarimo‘tkazgichda esa erkin zaryad tashuvchilar konsentratsiyasi eksponensial ortadi: <span class="f">R = R₀·exp(ΔE / 2kT)</span>, shuning uchun ln R ning 1/T ga bog‘lanishi to‘g‘ri chiziq bo‘lib, qiyaligi ΔE/2k ga teng.</p>'));
+  loop(frame)}});
+
+/* ================= 6-ish: RLC rezonans ================= */
+LABS.push({id:6,short:'Rezonans (RLC)',kind:'ketma-ket va parallel kontur',title:'O‘zgaruvchan tok zanjirida rezonans hodisasini o‘rganish',
+goal:'Ketma-ket konturda kuchlanishlar rezonansini, parallel konturda toklar rezonansini o‘lchang; rezonans chastotasidan g‘altak induktivligini va konturning sifatini (dobrotligini) aniqlang.',
+build(main){const L=V(6,'L',.06,.16),rL=V(6,'r',8,25),C=1e-6,R=100;let mode='s';
+  const cv=el('canvas'),osc=el('canvas'),lr=lcd('PV1: U_R','V'),lx=lcd('PV2: tanlangan element','V'),n1=new Needle(0,8,.5),n2=new Needle(0,8,.5);let gen=false,phR=0,phX=0;
+  const f=slider({label:'Generator chastotasi ν',min:.05,max:2.5,step:.005,value:.2,unit:'kHz',nudges:[.005,.05],nudgeLabel:x=>fmt(x,3),oninput:draw});
+  const eps=slider({label:'Generator kuchlanishi ε',min:.5,max:2,step:.1,value:1,unit:'V',oninput:draw});
+  const md=select({label:'Zanjir',options:[['s','Ketma-ket: C, L, R'],['p','Parallel: (C ∥ L) va R ketma-ket']],onchange:v=>{mode=v;gp()}});
+  const pv=select({label:'PV2 ulangan element',options:[['L','g‘altak U_L'],['C','kondensator U_C'],['LC','kontur U_LC (parallel)']],onchange:draw});
+  const J=journal([{h:'Zanjir'},{h:'ν, kHz',d:3},{h:'U_R, V',d:3},{h:'U_L / U_C / U_LC, V',d:3},{h:'element'}]);
+  function calc(){const w=2*Math.PI*f.get()*1e3,e=gen?eps.get():0;
+    if(mode==='s'){const X=w*L-1/(w*C),Z=Math.hypot(R+rL,X),I=e/Z;phR=-Math.atan2(X,R+rL);phX=pv.get()==='C'?phR-Math.PI/2:phR+Math.atan2(w*L,rL);return{UR:I*R,UL:I*Math.hypot(rL,w*L),UC:I/(w*C)}}
+    /* parallel: ZL=rL+jwL, ZC=1/jwC */const a=rL,b=w*L,d=a*a+b*b,Yl=[a/d,-b/d],Yc=[0,w*C],Y=[Yl[0]+Yc[0],Yl[1]+Yc[1]],yd=Y[0]**2+Y[1]**2,Zlc=[Y[0]/yd,-Y[1]/yd];
+    const Zt=Math.hypot(R+Zlc[0],Zlc[1]),I=e/Zt;phR=-Math.atan2(Zlc[1],R+Zlc[0]);phX=phR+Math.atan2(Zlc[1],Zlc[0]);return{UR:I*R,ULC:I*Math.hypot(Zlc[0],Zlc[1])}}
+  function draw(dt=0,t=0){const r=calc(),{g,w,h}=fit(cv,210);g.clearRect(0,0,w,h);const y=60;
+    gSrc(g,70,110,'ε');gWire(g,[[70,98],[70,y],[160,y]]);gWire(g,[[70,122],[70,170],[w-80,170]]);
+    if(mode==='s'){gCap(g,180,y,'C');gWire(g,[[190,y],[290,y]]);gCoil(g,330,y,70,'L');gWire(g,[[365,y],[w-80,y],[w-80,y+30]]);gRes(g,w-80,110,50,null,true);gLabel(g,'R',w-60,110,'left');gWire(g,[[w-80,135],[w-80,170]])}
+    else{gWire(g,[[160,y],[200,y]]);gCap(g,250,y-25,'C');gCoil(g,250,y+25,60,null);gLabel(g,'L',250,y+45);gWire(g,[[200,y],[200,y-25],[240,y-25]]);gWire(g,[[260,y-25],[300,y-25],[300,y+25],[280,y+25]]);gWire(g,[[200,y],[200,y+25],[220,y+25]]);gWire(g,[[300,y],[w-80,y],[w-80,y+30]]);gRes(g,w-80,110,50,null,true);gLabel(g,'R',w-60,110,'left');gWire(g,[[w-80,135],[w-80,170]])}
+    gLabel(g,`ν = ${fmt(f.get(),3)} kHz;  ε = ${fmt(eps.get(),1)} V`,w/2,195,'center',MUT);
+    gLed(g,60,140,gen,'#5fd39a','generator');const sel=mode==='s'?(pv.get()==='C'?r.UC:r.UL):r.ULC;n1.set(r.UR);n2.set(sel);const v1=n1.update(dt),v2=n2.update(dt);lr.set(noisy(v1,.005,.002),3);lx.set(noisy(v2,.005,.002),3);
+    /* ossillograf */{const{g:o,w:ow,h:oh}=fit(osc,180);o.clearRect(0,0,ow,oh);o.fillStyle='#061a10';o.fillRect(0,0,ow,oh);o.strokeStyle='#1d4a33';for(let i=0;i<=10;i++){o.beginPath();o.moveTo(i*ow/10,0);o.lineTo(i*ow/10,oh);o.stroke()}for(let j=0;j<=6;j++){o.beginPath();o.moveTo(0,j*oh/6);o.lineTo(ow,j*oh/6);o.stroke()}
+      const amp=Math.max(eps.get(),v1,v2,.1),sc=oh/2/amp*.85,ph=t*2*Math.PI*1.3;const tr=(A,p,c)=>{o.strokeStyle=c;o.lineWidth=1.6;o.beginPath();for(let px=0;px<ow;px++){const th=px/ow*4*Math.PI+ph;const yv=oh/2-A*sc*Math.sin(th+p);px?o.lineTo(px,yv):o.moveTo(px,yv)}o.stroke()};tr(gen?eps.get():0,0,'#f0c040');tr(v1,phR,'#ff6b5a');tr(v2,phX,'#4F9CF5');gLabel(o,'sariq — ε;  qizil — U_R;  ko‘k — PV2;  faza siljishi: '+fmt(phR*180/Math.PI,0)+'°',ow/2,oh-10,'center','#8fb8a3',10)}lx.root.querySelector('.k').textContent='PV2: '+(mode==='s'?(pv.get()==='C'?'U_C':'U_L'):'U_LC');
+  }
+  const pc=el('canvas');const gp=()=>{    const col={UR:'#c0182b',UL:'#1f6fb5',UC:'#2e7d32',ULC:'#8e44ad'};
+    plot(pc,{series:[{pts:J.rows.filter(x=>x[0]===mode).map(x=>[x[1],x[2]]),color:col.UR},{pts:J.rows.filter(x=>x[0]===mode&&x[4]==='L').map(x=>[x[1],x[3]]),color:col.UL},{pts:J.rows.filter(x=>x[0]===mode&&x[4]==='C').map(x=>[x[1],x[3]]),color:col.UC},{pts:J.rows.filter(x=>x[0]===mode&&x[4]==='LC').map(x=>[x[1],x[3]]),color:col.ULC}],xlabel:'ν, kHz',ylabel:'U, V',ymin:0,hover:(a,b)=>`ν = ${fmt(a,3)} kHz;  U = ${fmt(b,3)} V`})
+  };J.onchange=gp;setTimeout(gp,50);onResize(gp);
+  main.append(el('div',{class:'rig'},el('div',{class:'bench'},cv,el('div',{class:'cap'},'Pastda — ikki nurli ossillograf: generator kuchlanishi va o‘lchanayotgan kuchlanishlar; rezonansda U_R va ε bir fazada bo‘ladi.'),osc),el('div',{class:'side'},lr.root,lx.root,el('div',{class:'card'},el('div',{class:'btns',style:'margin:0 0 10px'},button('Generatorni yoqish/o‘chirish',()=>{gen=!gen;SFX.relay()})),md.root,f.root,eps.root,pv.root,el('div',{class:'btns'},button('Jadvalga yozish',()=>{const r=calc();J.add([mode,f.get(),r.UR,mode==='s'?(pv.get()==='C'?r.UC:r.UL):r.ULC,mode==='s'?pv.get():'LC'])}))))),
+    ...section('Rezonans egri chiziqlari (qizil — U_R, ko‘k — U_L, yashil — U_C, binafsha — U_LC)',el('div',{class:'card'},pc)),
+    ...section('Bajarish tartibi',steps(['Ketma-ket zanjirni tanlang, ε = 1 V. Chastotani 0,2 kHz dan oshirib, U_R maksimal bo‘ladigan rezonans chastotasi ν₀ ni toping.','U_R(ν) ni rezonans atrofida kamida 12–15 nuqtada o‘lchang (U_R rezonansdagidan 3–4 marta kamayguncha). Rezonans yaqinida qadamni 5 Hz gacha kichraytiring.','PV2 ni g‘altakka, so‘ng kondensatorga ulab, U_L(ν) va U_C(ν) ni ham o‘lchang. Rezonansda U_L va U_C ning ε dan necha marta kattaligiga e’tibor bering.','Induktivlikni hisoblang: <span class="f">L = 1 / (C·(2πν₀)²)</span>, C = 1 µF. Nazariy sifat <span class="f">Q = (1/R)·√(L/C)</span> ni tajribaviy <span class="f">Q = U_Crez/ε</span> bilan taqqoslang. Egri chiziqning yarim balandlikdagi kengligidan ham Q = ν₀/Δν ni toping.','Parallel zanjirga o‘ting: U_R minimal, U_LC maksimal bo‘ladigan chastotani toping va egri chiziqlarni oling. Ikki rezonans chastotasini taqqoslang.','Rezistorning ε ga nisbatan U_R < ε bo‘lishini (g‘altakning aktiv qarshiligi r) tushuntiring va r ni baholang.'])),
+    ...section('O‘lchash jurnali',J.root),
+    ...section('Natijani tekshirish',verify([{label:'G‘altak induktivligi L',unit:'H (masalan 0,105)',truth:()=>L,tol:.03},{label:'Tajribaviy sifat Q = U_Crez/ε',unit:'',truth:()=>Math.sqrt(L/C)/(R+rL),tol:.08},{label:'G‘altakning aktiv qarshiligi r',unit:'Om',truth:()=>rL,tol:.15}])),
+    theory('Qisqacha nazariya','<p>Ketma-ket konturda tok <span class="f">I = ε / √((R+r)² + (ωL − 1/ωC)²)</span>; ωL = 1/ωC bo‘lganda tok maksimal — kuchlanishlar rezonansi, <span class="f">ω₀ = 1/√(LC)</span>. U_L = U_C = Q·ε, bu yerda Q — sifat. Parallel konturda rezonansda kontur qarshiligi maksimal, umumiy tok minimal — toklar rezonansi.</p>'));
+  loop(draw)}});
+
+/* ================= 7-ish: o‘zgaruvchan tok ko‘prigi ================= */
+LABS.push({id:7,short:'O‘lchov ko‘prigi R, C, L',kind:'reoxord, galvanometr',title:'Ko‘prik sxemasi yordamida qarshilik, sig‘im va induktivlikni aniqlash',
+goal:'Reoxordli o‘zgaruvchan tok ko‘prigida muvozanatni topib, noma’lum rezistor, kondensator va g‘altakning parametrlarini etalon elementlar yordamida aniqlang.',
+build(main){const RXu=V(7,'rx',400,1500),CXu=V(7,'cx',180,900),LXu=V(7,'lx',3,12),rLx=LXu*V(7,'q',.6,1.4);
+  const cv=el('canvas'),lg=lcd('Millivoltmetr (galvanometr)','mV'),lq=lcd('Quloqchinda tovush','');const nd=new Needle(0,9,.4);let ph=false,gen=false;
+  const md=select({label:'O‘lchanadigan kattalik',options:[['R','Rezistor R_x'],['C','Kondensator C_x'],['L','G‘altak L_x']],onchange:()=>{R0.set('330');draw()}});
+  const R0=select({label:'Etalon element',options:[['330','R₀ = 330 Om'],['1000','R₀ = 1 kOm'],['2200','R₀ = 2,2 kOm']],onchange:draw});
+  const C0=select({label:'Etalon kondensator',options:[['100','C₀ = 100 pF'],['470','C₀ = 470 pF'],['1000','C₀ = 1000 pF']],onchange:draw});
+  const L0=select({label:'Etalon g‘altak',options:[['1','L₀ = 1 mH'],['4.7','L₀ = 4,7 mH'],['10','L₀ = 10 mH']],onchange:draw});
+  const l1=slider({label:'Reoxord hisoblagichi l₁',min:0,max:100,step:.1,value:50,unit:'%',nudges:[.1,1,10],nudgeLabel:x=>String(x).replace('.',','),oninput:draw});
+  const R2=slider({label:'R₂ regulyatori (g‘altak yo‘qotishini muvozanatlash)',min:0,max:50,step:.5,value:0,unit:'Om',oninput:draw});
+  const J=journal([{h:'Kattalik'},{h:'Etalon'},{h:'l₁, %',d:1},{h:'l₂, %',d:1},{h:'Natija',edit:true}]);
+  function unbalance(){const a=l1.get()/100,b=1-a,w=2*Math.PI*1000;
+    if(md.get()==='R'){const r0=+R0.get();return Math.abs(RXu/(RXu+r0)-b/(a+b))*1000}
+    if(md.get()==='C'){const c0=+C0.get();/* Zx/Z0 = C0/Cx = l1/l2 */return Math.abs(c0/(c0+CXu)-a/(a+b))*1000}
+    const L=+L0.get(),rl0=L*1.0;/* Lx/L0 = l1/l2 ; aktiv qism R2 */const re=(rLx-rl0*(LXu/L))/50*.3,im=Math.abs(LXu/(LXu+L)-a/(a+b));return (Math.hypot(im,re+Math.abs(R2.get()-(rLx-rl0*LXu/L))/50*.3))*1000}
+  function draw(dt=0,t=0){const u=gen?unbalance():0,{g,w,h}=fit(cv,230);g.clearRect(0,0,w,h);if(ph&&gen)SFX.setTone(Math.min(1,u/400)*.3,1000);else SFX.setTone(0);
+    const cx=w/2,top=40,bot=190,lx=80,rx=w-80;gWire(g,[[lx,115],[cx,top],[rx,115],[cx,bot],[lx,115]]);
+    const m=md.get();const draw1=(x,y,lab,kind)=>{if(kind==='R')gRes(g,x,y,56,lab);else if(kind==='C')gCap(g,x,y,lab);else gCoil(g,x,y,56,lab)};
+    draw1((lx+cx)/2-10,(115+top)/2,m==='R'?'R_x':m==='C'?'C_x':'L_x',m);draw1((cx+rx)/2+10,(115+top)/2,m==='R'?'R₀':m==='C'?'C₀':'L₀',m);
+    gWire(g,[[lx,115],[cx,bot]],'#9fb3c4',4);gWire(g,[[cx,bot],[rx,115]],'#9fb3c4',4);const tt=l1.get()/100,px=lx+(rx-lx)*tt,py=tt<.5?115+(bot-115)*tt*2:bot-(bot-115)*(tt-.5)*2;gDot(g,px,py,REDC,5);gLabel(g,'l₁',(lx+cx)/2-14,(115+bot)/2+16,'center',REDC);gLabel(g,'l₂',(cx+rx)/2+14,(115+bot)/2+16,'center',REDC);
+    gWire(g,[[cx,top],[cx,top-20],[cx-100,top-20],[cx-100,20]]);gSrc(g,cx-100,8,null);gLabel(g,'~ 1 kHz',cx-100,-2,'center');gWire(g,[[cx,top+16],[cx,115-18]]);gMeter(g,cx,115,'mV',null,null,18);gWire(g,[[cx,133],[px,py]]);
+    nd.set(Math.min(1.05,u/400));const r=nd.update(dt);gNeedle(g,w-60,h-10,r,'',38);gLed(g,30,h-20,gen,'#5fd39a','generator 1 kHz');gLed(g,30,h-40,ph,'#f0c040','quloqchin');lg.set(fmt(noisy(Math.max(0,r*400),.01,.2),1));lq.set(!ph?'ulanmagan':u<2?'tinch':u<30?'juda past':u<120?'past':'baland')}
+  main.append(el('div',{class:'rig'},el('div',{class:'bench'},cv,el('div',{class:'cap'},'Reoxord hisoblagichi 0–100 % oralig‘ida (10 aylanish). Muvozanatda millivoltmetr minimal ko‘rsatadi va quloqchindagi 1 kHz tovush yo‘qoladi. G‘altak o‘lchashda to‘liq muvozanat uchun R₂ bilan aktiv yo‘qotishni ham tenglashtirish kerak.')),el('div',{class:'side'},lg.root,lq.root)),
+    el('div',{class:'card',style:'margin-top:14px'},el('div',{class:'btns',style:'margin:0 0 10px'},button('Generatorni yoqish/o‘chirish',()=>{gen=!gen;SFX.relay()}),button('Quloqchinni ulash/uzish',()=>{ph=!ph},'ghost')),el('div',{class:'cols'},md.root,R0.root,C0.root,L0.root,l1.root,R2.root),el('div',{class:'btns'},button('Jadvalga yozish',()=>{const m=md.get();J.add([m==='R'?'R_x':m==='C'?'C_x':'L_x',m==='R'?R0.get()+' Om':m==='C'?C0.get()+' pF':L0.get()+' mH',l1.get(),100-l1.get(),''])}))),
+    ...section('Bajarish tartibi',steps(['<b>Rezistor.</b> R_x rejimini, etalon R₀ = 330 Om ni tanlang. Reoxordni burab minimumni toping, l₁ ni jadvalga yozing. Har bir etalon uchun 3 marta o‘lchang: <span class="f">R_x = R₀ · (100 − l₁) / l₁</span>.','R₀ = 1 kOm va 2,2 kOm uchun takrorlang. Qaysi etalonda minimum eng o‘tkir va natija eng aniq? Nima uchun?','<b>Kondensator.</b> C₀ = 100, 470, 1000 pF uchun muvozanatni toping: <span class="f">C_x = C₀ · l₁ / (100 − l₁)</span>. Formula rezistornikidan nima bilan farq qiladi va nima uchun?','<b>G‘altak.</b> L₀ ni tanlang; reoxord va R₂ ni navbatma-navbat sozlab chuqur minimumga erishing: <span class="f">L_x = L₀ · (100 − l₁) / l₁</span>. Nima uchun g‘altak ko‘prigida faqat reoxord bilan to‘liq muvozanatga erishib bo‘lmaydi?','Har bir kattalik uchun o‘rtacha qiymat va o‘rtacha kvadratik xatolikni hisoblang.'])),
+    ...section('O‘lchash jurnali',J.root),
+    ...section('Natijani tekshirish',verify([{label:'R_x',unit:'Om',truth:()=>RXu,tol:.03},{label:'C_x',unit:'pF',truth:()=>CXu,tol:.04},{label:'L_x',unit:'mH',truth:()=>LXu,tol:.05}])),
+    theory('Qisqacha nazariya','<p>O‘zgaruvchan tok ko‘prigining muvozanat sharti: <span class="f">Z_x · Z₂ = Z₀ · Z₁</span> (kompleks impedanslar). Reoxord yelkalari uchun Z₁/Z₂ = l₁/l₂. Rezistor va g‘altak uchun Z ∝ R yoki L, kondensator uchun Z ∝ 1/C, shuning uchun C_x formulasida yelkalar nisbati teskari. G‘altakning aktiv qarshiligi tufayli muvozanat ikki shart (modul va faza) bo‘yicha topiladi.</p>'));
+  cleanup.push(()=>SFX.stopTone());loop(draw)}});
+
+/* ================= 8-ish: Faradey doimiysi ================= */
+LABS.push({id:8,short:'Faradey doimiysi',kind:'elektroliz, Joul-vattmetr',title:'Faradey doimiysini aniqlash',
+goal:'Suyultirilgan sulfat kislotani elektroliz qilib ajralgan vodorod hajmini va sarflangan elektr ishini o‘lchang; Faradey doimiysini hisoblang.',
+build(main){const I0=V(8,'i',.35,.7),Tr=V(8,'t',19,26),pr=V(8,'p',98,103);let on=false,run=false,Vml=0,A=0,t=0,sat=false;
+  const cv=el('canvas'),lv=lcd('H₂ hajmi (o‘lchov nayi)','ml'),la=lcd('Joul-vattmetr','Ws'),li=lcd('Tok / kuchlanish','');
+  const U=slider({label:'Manba kuchlanishi U₀',min:5,max:20,step:.5,value:15,unit:'V'});
+  const lev=check('Darajalash idishi H₂ nayi sathi bilan tenglashtirilgan',true);
+  const J=journal([{h:'U₀, V',d:1},{h:'V(H₂), ml',d:1},{h:'A, Ws',d:0},{h:'T, °C',d:1},{h:'p, kPa',d:1},{h:'F, C/mol',edit:true}]);
+  const I=()=>on?Math.max(0,(U.get()-2.5))/(12.5)*I0:0;
+  function frame(dt){const F=96485.33,R=8.314;if(on){const i=I();t+=dt*8;const dq=i*dt*8;const dn=dq/(2*F);Vml+=dn*R*(Tr+273.15)/(pr*1e3)*1e6*(sat?1:.92);if(Vml>2&&!sat)sat=true;if(run)A+=U.get()*dq;if(Vml>=30){Vml=30;on=false}}
+    const{g,w,h}=fit(cv,250);g.clearRect(0,0,w,h);const x0=w*.42;
+    /* U-simon nay */g.strokeStyle='#9fb3c4';g.lineWidth=3;g.beginPath();g.moveTo(x0-60,30);g.lineTo(x0-60,200);g.lineTo(x0+60,200);g.lineTo(x0+60,30);g.stroke();g.beginPath();g.moveTo(x0-36,30);g.lineTo(x0-36,176);g.lineTo(x0+36,176);g.lineTo(x0+36,30);g.stroke();
+    const lvl=Math.min(140,Vml/30*140);g.fillStyle='rgba(120,180,255,.35)';g.fillRect(x0-60,60+lvl,24,140-lvl);g.fillRect(x0+36,60,24,140);g.fillRect(x0-36,176,72,24);g.fillRect(x0-60,176,120,24);
+    for(let k=0;k<=30;k+=5){const y=60+k/30*140;g.fillStyle=MUT;g.fillRect(x0-66,y,6,1);gLabel(g,String(k),x0-74,y,'right',MUT,9)}gLabel(g,'H₂ (−)',x0-48,20);gLabel(g,'O₂ (+)',x0+48,20);
+    if(on){for(let b=0;b<6;b++){gDot(g,x0-52+Math.random()*8,120+Math.random()*70,'rgba(255,255,255,.6)',1.5)}}
+    gBox(g,40,70,90,50,on?'#2b3a47':'#1a242d');gLabel(g,'Manba',85,85,'center',INK);gLabel(g,fmt(on?U.get():0,1)+' V',85,105,'center','#7CF0B0');gLed(g,50,78,on);gNeedle(g,85,200,I()/I0,'',34);gLabel(g,'A: '+fmt(I()*1e3,0)+' mA',85,218,'center','#7CF0B0',10);gWire(g,[[130,80],[x0-48,80]],WIRE);gWire(g,[[130,110],[x0+48,110]],WIRE);
+    gBox(g,w-170,60,130,70,'#1a242d');gLabel(g,'Joul-vattmetr',w-105,76,'center',INK);gLabel(g,fmt(A,0)+' Ws',w-105,100,'center','#7CF0B0',14);gLabel(g,run?'RUN':'RESET',w-105,118,'center',run?'#7CF0B0':MUT,10);
+    gLabel(g,`T = ${fmt(Tr,1)} °C;  p = ${fmt(pr,1)} kPa`,w-105,160,'center');
+    lv.set(noisy(Vml,0,.05),1);la.set(noisy(A,.002),0);li.set(fmt(I()*1e3,0)+' mA / '+fmt(on?U.get():0,1)+' V')}
+  main.append(el('div',{class:'rig'},el('div',{class:'bench'},cv,el('div',{class:'cap'},'Vaqt 8 marta tezlashtirilgan. Gaz hajmini o‘qishdan oldin darajalash idishini pasaytirib, suyuqlik sathlarini tenglashtiring (gaz bosimi atmosfera bosimiga teng bo‘lsin).')),el('div',{class:'side'},lv.root,la.root,li.root,el('div',{class:'card'},U.root,lev.root,el('div',{class:'btns'},button('Manbani yoqish/o‘chirish',()=>{on=!on;SFX.relay()}),button('Vattmetr: RUN',()=>run=true,'ghost'),button('Vattmetr: RESET',()=>{run=false;A=0},'ghost'),button('Nayni bo‘shatish',()=>{Vml=0;sat=false;A=0;run=false},'ghost'),button('Jadvalga yozish',()=>J.add([U.get(),lev.get()?Vml:Vml*1.03,A,Tr,pr,''])))))),
+    ...section('Bajarish tartibi',steps(['Manbani yoqing (U₀ = 15 V) va eritma gaz bilan to‘yinishi uchun 2–3 ml gaz ajralguncha kuting, so‘ng nayni bo‘shating (jo‘mraklarni ochish). Vattmetrni RESET holatiga keltiring.','Manbani yoqing. Suyuqlik sathi 5 ml belgiga yetganda vattmetrni RUN ga o‘tkazing.','Sath 25 ml belgiga yetganda manbani o‘chiring; A ni, T va p ni jadvalga yozing. V = 20 ml.','Faradey doimiysini hisoblang: <span class="f">n = pV/(RT)</span> — vodorod mollari; <span class="f">q = A/U₀</span>; <span class="f">F = q/(z·n)</span>, z = 2.','O‘lchashni U₀ = 10 va 20 V da takrorlang. F manba kuchlanishiga bog‘liqmi?','Darajalash idishi sathini tenglashtirmay o‘lchasangiz xatolik qanday bo‘ladi? Nima uchun o‘lchash kislorod emas, vodorod bo‘yicha olib boriladi?'])),
+    ...section('O‘lchash jurnali',J.root),
+    ...section('Natijani tekshirish',verify([{label:'Faradey doimiysi F',unit:'C/mol',truth:()=>96485,tol:.05}])),
+    theory('Qisqacha nazariya','<p>Faradey qonuni: ajralgan modda miqdori o‘tgan zaryadga proporsional, <span class="f">q = ν·z·F</span>, bu yerda F = N_A·e = 96 485 C/mol. Vodorod uchun 2H⁺ + 2e⁻ → H₂, ya’ni z = 2. Gaz mollari soni ideal gaz tenglamasidan topiladi; zaryad esa elektr ishi orqali: q = A/U₀.</p>'));
+  loop(frame)}});
+
+/* ================= 9-ish: RC vaqt doimiysi ================= */
+LABS.push({id:9,short:'RC vaqt doimiysi',kind:'razryad, ln U(t)',title:'Qarshilik va sig‘imni o‘z ichiga olgan zanjirning vaqt doimiysini aniqlash',
+goal:'Kondensator voltmetr orqali razryadlanganda kuchlanishning vaqtga bog‘lanishini o‘lchab, zanjirning vaqt doimiysini va voltmetrning kirish qarshiligini aniqlang.',
+build(main){const RV=V(9,'rv',120,260)*1e6,C1=.1e-6,C2=1.0e-6*(1+V(9,'c2',-.05,.05));let S1=true,Uc=0,t=0,run=false,lastT=-1;
+  const cv=el('canvas'),lu=lcd('Voltmetr U_C','V'),lt=lcd('Sekundomer','s');
+  const E=slider({label:'E3 manba kuchlanishi',min:0,max:15,step:.5,value:12,unit:'V'});
+  const par=check('C₂ = 1 µF kondensator C₁ ga parallel ulangan',false);
+  const auto=check('Har 5 s da avtomatik jadvalga yozish',true);
+  const J=journal([{h:'C'},{h:'t, s',d:0},{h:'U, V',d:3},{h:'ln U',edit:true}]);
+  const Cap=()=>C1+(par.get()?C2:0);
+  function frame(dt,tnow){const t_=tnow;if(S1){Uc+=(E.get()-Uc)*Math.min(1,dt*4);t=0;lastT=-1}else{Uc*=Math.exp(-dt*3/(RV*Cap()));t+=dt*3;if(auto.get()&&Math.floor(t/5)>lastT){lastT=Math.floor(t/5);J.add([par.get()?'C₁+C₂':'C₁',lastT*5,noisy(Uc,.003,.003),''])}}
+    const{g,w,h}=fit(cv,200);g.clearRect(0,0,w,h);const y=100;gBat(g,70,y,'E3');gWire(g,[[70,y-14],[70,40],[180,40]]);gSwitch(g,200,40,S1,'S1');if(S1)gFlow(g,[[70,40],[320,40],[320,y-14]],Math.max(.2,E.get()/5),t_);else gFlow(g,[[320,y-14],[320,40],[w-80,40],[w-80,y-22]],Math.max(.05,Uc/4),t_);gWire(g,[[212,40],[320,40],[320,y-14]]);gCap(g,320,y,'C₁',true);gWire(g,[[320,y+14],[320,160],[70,160],[70,y+14]]);
+    if(par.get()){gWire(g,[[320,40],[400,40],[400,y-14]]);gCap(g,400,y,'C₂',true);gWire(g,[[400,y+14],[400,160],[320,160]])}
+    gWire(g,[[400,40],[w-80,40],[w-80,y-22]]);gMeter(g,w-80,y,'V',fmt(Uc,2),'V');gWire(g,[[w-80,y+22],[w-80,160],[400,160]]);gLabel(g,'R_V — voltmetrning kirish qarshiligi',w-80,y+40);
+    lu.set(noisy(Uc,.003,.003),3);lt.set(t,1);
+    plot(pc,{series:[{pts:J.rows.filter(r=>r[0]==='C₁').map(r=>[r[1],r[2]]),color:'#c0182b',line:true},{pts:J.rows.filter(r=>r[0]==='C₁+C₂').map(r=>[r[1],r[2]]),color:'#1f6fb5',line:true}],xlabel:'t, s',ylabel:'U, V',ymin:0})}
+  const pc=el('canvas');
+  main.append(el('div',{class:'rig'},el('div',{class:'bench'},cv,el('div',{class:'cap'},'Vaqt 3 marta tezlashtirilgan. S1 yopiq — kondensator zaryadlanadi; S1 ochilgach kondensator faqat voltmetrning kirish qarshiligi orqali razryadlanadi.')),el('div',{class:'side'},lu.root,lt.root,el('div',{class:'card'},E.root,par.root,auto.root,el('div',{class:'btns'},button('S1 ni ulash / uzish',()=>{S1=!S1;SFX.relay()}),button('Jadvalga yozish',()=>J.add([par.get()?'C₁+C₂':'C₁',Math.round(t),Uc,''])))))),
+    ...section('Grafik U(t): qizil — C₁, ko‘k — C₁+C₂',el('div',{class:'card'},pc)),
+    ...section('Bajarish tartibi',steps(['S1 ulangan holda E3 bilan kondensatorda 10–15 V o‘rnating.','S1 ni uzing. Har 5 s da voltmetr ko‘rsatkichi jurnalga yoziladi (avtomatik rejim yoqilgan bo‘lsa). Kuchlanish boshlang‘ich qiymatning ≈ 1/10 qismigacha tushguncha kuzating.','C₂ ni parallel ulab o‘lchashni takrorlang.','Har bir seriya uchun ln U ni hisoblang va ln U = f(t) grafiklarini chizing; ular to‘g‘ri chiziq bo‘lishi kerak. Qiyalik K dan vaqt doimiysini toping: <span class="f">τ = −1/K</span>.','Voltmetr qarshiligini hisoblang: <span class="f">R_V = τ/C</span>. Ikki seriya bir xil R_V beradimi? τ ning C ga proporsionalligini tekshiring.','Burchak koeffitsiyentining xatoligi orqali R_V ning nisbiy xatoligini baholang.'])),
+    ...section('O‘lchash jurnali',J.root),
+    ...section('Natijani tekshirish',verify([{label:'τ₁ (C₁ = 0,1 µF)',unit:'s',truth:()=>RV*C1,tol:.05},{label:'Voltmetr qarshiligi R_V',unit:'MOm',truth:()=>RV/1e6,tol:.06}])),
+    theory('Qisqacha nazariya','<p>Razryadda <span class="f">U = U₀·exp(−t/τ)</span>, <span class="f">τ = RC</span>. Logarifmlasak ln U = ln U₀ − t/τ — to‘g‘ri chiziq. Vaqt doimiysi kuchlanish e ≈ 2,72 marta kamayadigan vaqtdir. Katta R_V (yuz MOm) va kichik C bilan τ sekundlar tartibida bo‘lib, uni oddiy sekundomer bilan o‘lchash mumkin.</p>'));
+  loop(frame)}});
+/* ================= 10-ish: Amper kuchi ================= */
+LABS.push({id:10,short:'Amper kuchi',kind:'taqasimon magnit, dinamometr',title:'Taqasimon magnit maydonida tokli o‘tkazgichga ta’sir etuvchi kuchni o‘lchash',
+goal:'Kuchning tok kuchiga, o‘tkazgich uzunligiga va tok bilan maydon orasidagi burchakka bog‘lanishini o‘lchang; magnit maydon induksiyasini aniqlang.',
+build(main){const B=V(10,'b',.28,.5);let comp=0,on=false;const nd=new Needle(0,7,.4),dfl=new Needle(0,5,.3);
+  const cv=el('canvas'),lf=lcd('Dinamometr (kuch sensori)','mN'),lb=lcd('Tok manbai','A');
+  const I=slider({label:'Tok kuchi I',min:0,max:20,step:.5,value:0,unit:'A',nudges:[.5,2],nudgeLabel:x=>fmt(x,1),oninput:draw});
+  const Lw=select({label:'O‘tkazgich halqa kengligi',options:[['8','8 sm'],['4','4 sm'],['2','2 sm']],onchange:draw});
+  const al=slider({label:'Magnit maydon va o‘tkazgich orasidagi burchak α',min:0,max:180,step:5,value:90,unit:'°',oninput:draw});
+  const rng=select({label:'Dinamometr diapazoni',options:[['2000','2000 mN'],['200','200 mN']],onchange:draw});
+  const J=journal([{h:'L, sm'},{h:'I, A',d:1},{h:'α, °',d:0},{h:'F, mN',d:1},{h:'F/(I·L), N/(A·m)',edit:true}]);
+  const F=()=>on?B*I.get()*(+Lw.get()/100)*Math.sin(al.get()*Math.PI/180)*1e3:0;
+  function draw(dt=0,t=0){const f=F(),{g,w,h}=fit(cv,250);nd.set(f-comp);const fd=nd.update(dt);dfl.set(f/8);const dy=dfl.update(dt);g.clearRect(0,0,w,h);gRail(g,w,230);
+    /* magnit */g.fillStyle='#8a2a2a';g.fillRect(w*.3,120,30,70);g.fillStyle='#2a4a8a';g.fillRect(w*.3+110,120,30,70);g.fillStyle='#555';g.fillRect(w*.3,190,140,20);gLabel(g,'N',w*.3+15,110,'center',REDC,14);gLabel(g,'S',w*.3+125,110,'center',BLUC,14);
+    /* halqa */const Lp=+Lw.get()*9,xc=w*.3+70,a=al.get()*Math.PI/180;g.save();g.translate(xc,150-dy);g.rotate(Math.PI/2-a);gWire(g,[[-Lp/2,-90],[-Lp/2,0],[Lp/2,0],[Lp/2,-90]],on&&I.get()>0?'#ffb347':WIRE,3);if(on)gFlow(g,[[-Lp/2,-90],[-Lp/2,0],[Lp/2,0],[Lp/2,-90]],I.get()/4,t);g.restore();
+    /* sensor */gBox(g,xc-40,20,80,40,'#3a3320','#8a7a3a');gLabel(g,'kuch sensori',xc,40,'center',INK,10);gWire(g,[[xc,60],[xc,90]],'#9fb3c4',1.5);
+    gBox(g,w-180,40,150,70,'#1a242d');gLabel(g,'Dinamometr',w-105,56,'center',INK);gLabel(g,fmt(fd,1)+' mN',w-105,82,'center','#7CF0B0',15);gLed(g,w-170,52,on,'#5fd39a','manba');gLabel(g,'diapazon '+rng.get(),w-105,100,'center',MUT,9);
+    gLabel(g,`α = ${al.get()}°`,xc,245);lf.set(Math.abs(fd)>+rng.get()?'chegaradan tashqari':fmt(noisy(fd,.004,.3),1));lb.set(on?I.get():0,1);
+  }
+  const pc=el('canvas');const gp=()=>plot(pc,{series:[{pts:J.rows.filter(r=>r[2]===90).map(r=>[r[1],r[3]]),color:'#c0182b'}],xlabel:'I, A',ylabel:'F, mN',ymin:0,xmin:0});J.onchange=gp;setTimeout(gp,50);onResize(gp);
+  main.append(el('div',{class:'rig'},el('div',{class:'bench'},cv,el('div',{class:'cap'},'O‘tkazgich halqaning gorizontal qismi magnit qutblari orasida. 20 A tokni faqat qisqa muddat o‘tkazing. Taqasimon magnit maydoni bir jinsli emas — halqani qutblar o‘rtasiga joylashtiring.')),el('div',{class:'side'},lf.root,lb.root,el('div',{class:'card'},I.root,Lw.root,al.root,rng.root,el('div',{class:'btns'},button('Yuqori tok manbaini yoqish/o‘chirish',()=>{on=!on;SFX.relay()}),button('COMPENSATION (nolni o‘rnatish)',()=>{comp=F()+noisy(0,0,.2);SFX.beep()},'ghost'),button('Jadvalga yozish',()=>J.add([+Lw.get(),I.get(),al.get(),noisy(nd.v,.004,.3),''])))))),
+    ...section('Grafik F(I) (α = 90°)',el('div',{class:'card'},pc)),
+    ...section('Bajarish tartibi',steps(['8 sm li halqani ulang, I = 0 da COMPENSATION bilan nolni o‘rnating. Tokni 2 A qadam bilan 20 A gacha oshirib, F ni yozing. So‘ng I = 0 da nolni tekshiring.','F(I) grafigini chizing; qiyalikdan <span class="f">B = F/(I·L)</span> ni toping.','I = 10 A da 8, 4 va 2 sm li halqalar uchun F ni o‘lchang; F ∝ L ekanini tekshiring.','4 sm li halqa, I = 10 A: α ni 0° dan 180° gacha 15° qadam bilan o‘zgartirib F ni o‘lchang; F(α) grafigini sin α bilan taqqoslang.','Barcha seriyalardan B ni hisoblab o‘rtachalang; nisbiy xatolikni baholang.','Tok yo‘nalishi (α = 90° → 270°) o‘zgarganda kuch yo‘nalishi qanday o‘zgaradi? Chap qo‘l qoidasi bilan tekshiring.'])),
+    ...section('O‘lchash jurnali',J.root),
+    ...section('Natijani tekshirish',verify([{label:'Magnit induksiyasi B',unit:'T',truth:()=>B,tol:.04}])),
+    theory('Qisqacha nazariya','<p>Amper qonuni: <span class="f">F = I·L·B·sin α</span> — maydonda tokli o‘tkazgichga ta’sir etuvchi kuch tok kuchiga, o‘tkazgichning maydondagi uzunligiga va maydon induksiyasiga proporsional; yo‘nalishi chap qo‘l qoidasi bilan topiladi. Halqaning vertikal qismlariga ta’sir etuvchi kuchlar o‘zaro kompensatsiyalanadi.</p>'));
+  loop(draw)}});
+
+/* ================= 11-ish: Bio–Savar ================= */
+LABS.push({id:11,short:'Bio–Savar qonuni',kind:'to‘g‘ri o‘tkazgich, halqa',title:'To‘g‘ri o‘tkazgich va aylana tokning magnit induksiyasini o‘lchash',
+goal:'Xoll zondli teslametr yordamida to‘g‘ri o‘tkazgich va aylana halqalar maydonini tok kuchi hamda masofaning funksiyasi sifatida o‘lchang; Bio–Savar–Laplas qonunini tekshiring.',
+build(main){const mu0=4e-7*Math.PI,r0=V(11,'r0',1.6,2.4)/*mm sim radiusi+zond chuqurligi*/,off=V(11,'off',-.02,.02);
+  const cv=el('canvas'),lb=lcd('Teslametr','mT'),nd=new Needle(0,8,.6);let zero=V(11,'z',-.03,.03),on=false,geo={};
+  const cf=select({label:'O‘tkazgich',options:[['w','To‘g‘ri o‘tkazgich (tangensial zond)'],['40','Halqa 2R = 40 mm (aksial zond)'],['80','Halqa 2R = 80 mm'],['120','Halqa 2R = 120 mm']],onchange:draw});
+  const I=slider({label:'Tok kuchi I',min:0,max:20,step:.5,value:20,unit:'A',nudges:[.5,2],nudgeLabel:x=>fmt(x,1),oninput:draw});
+  const s=slider({label:'Zond masofasi (s — simdan; x — halqa markazidan o‘q bo‘ylab)',min:-60,max:60,step:.5,value:0,unit:'mm',nudges:[.5,5],nudgeLabel:x=>fmt(x,1),oninput:draw});
+  const J=journal([{h:'O‘tkazgich'},{h:'I, A',d:1},{h:'s yoki x, mm',d:1},{h:'B, mT',d:3},{h:'B_naz, mT',edit:true}]);
+  const Bv=()=>{const i=on?I.get():0;if(cf.get()==='w'){const d=Math.max(0,s.get())*1e-3+r0*1e-3;return mu0*i/(2*Math.PI*d)*1e3}const R=+cf.get()/2*1e-3,x=s.get()*1e-3;return mu0*i*R*R/(2*Math.pow(R*R+x*x,1.5))*1e3};
+  function draw(dt=0,t=0){const{g,w,h}=fit(cv,230);g.clearRect(0,0,w,h);gRail(g,w,210);const cx=w*.4;geo={cx,w};nd.set(Bv()+zero);const bd=nd.update(dt);
+    if(cf.get()==='w'){gWire(g,[[cx,20],[cx,200]],on?'#ffb347':WIRE,5);if(on)gFlow(g,[[cx,200],[cx,20]],I.get()/4,t);gLabel(g,'I ↑',cx+18,30,'left',WIRE);const px=cx+6+Math.max(0,s.get())*2.2;gBox(g,px,100,70,12,'#3a3320','#c9b458');gLabel(g,'tangensial zond',px+35,124);gLabel(g,'s = '+fmt(Math.max(0,s.get()),1)+' mm',px+35,88)}
+    else{const R=+cf.get()*1.1;g.strokeStyle=on?'#ffb347':WIRE;g.lineWidth=4;g.beginPath();g.ellipse(cx,110,R*.25,R,0,0,7);g.stroke();const px=cx+s.get()*2.2;gBox(g,px-35,104,70,12,'#3a3320','#c9b458');gLabel(g,'aksial zond',px,124);gLabel(g,'x = '+fmt(s.get(),1)+' mm',px,88);g.setLineDash([4,4]);g.strokeStyle=MUT;g.beginPath();g.moveTo(cx-160,110);g.lineTo(cx+160,110);g.stroke();g.setLineDash([])}
+    gBox(g,w-170,50,140,60,'#1a242d');gLabel(g,'Teslametr',w-100,66,'center',INK);gLabel(g,fmt(bd,3)+' mT',w-100,92,'center','#7CF0B0',15);gLed(g,w-160,100,on,'#5fd39a','manba');gLabel(g,'zondni sichqoncha bilan suring',cx,205,'center',MUT,10);lb.set(noisy(bd,.01,.004),3);
+  }
+  const pc=el('canvas');const gp=()=>{const name=cf.root.querySelector('select').selectedOptions[0].textContent;plot(pc,{series:[{pts:J.rows.filter(r=>r[0]===name&&r[1]===20).map(r=>[r[2],r[3]]),color:'#c0182b',line:true},{pts:J.rows.filter(r=>r[0]===name&&r[2]===0).map(r=>[r[1],r[3]]),color:'#1f6fb5'}],xlabel:'s / x, mm  (ko‘k nuqtalar: I, A)',ylabel:'B, mT',ymin:0})};J.onchange=gp;setTimeout(gp,50);onResize(gp);
+  main.append(el('div',{class:'rig'},el('div',{class:'bench'},cv,el('div',{class:'cap'},'Teslametr har o‘lchash seriyasidan oldin nolga keltiriladi. Zond nuqtasi simning o‘qidan sim radiusi va zond chuqurligi qadar uzoqda — shuning uchun s = 0 da ham maydon chekli.')),el('div',{class:'side'},lb.root,el('div',{class:'card'},cf.root,I.root,s.root,el('div',{class:'btns'},button('Manbani yoqish/o‘chirish',()=>{on=!on;SFX.relay()}),button('Teslametrni nollash',()=>{zero=-Bv();SFX.beep()},'ghost'),button('Jadvalga yozish',()=>J.add([cf.root.querySelector('select').selectedOptions[0].textContent,I.get(),s.get(),noisy(nd.v,.01,.004),''])))))),
+    ...section('Grafik B(s) yoki B(x) (I = 20 A) va B(I) (s = 0)',el('div',{class:'card'},pc)),
+    ...section('Bajarish tartibi',steps(['To‘g‘ri o‘tkazgich, zond simga tegib turibdi (s = 0). I ni 0 dan 20 A gacha 2 A qadam bilan oshirib B ni yozing. B(I) chiziqli ekanini tekshiring.','I = 20 A da zondni s = 1, 2, 3, 5, 7, 10, 15, 20, 30, 40 mm ga surib B(s) ni oling. B·(s + r₀) = const ekanini tekshiring (r₀ — sim radiusi va zond chuqurligi, uni grafikdan toping: 1/B ning s ga bog‘lanishi to‘g‘ri chiziq, uning s o‘qi bilan kesishishi −r₀).','40 mm li halqa, x = 0: B(I) ni oling. Formula bilan taqqoslang: <span class="f">B = μ₀I/(2R)</span>.','I = 20 A da x ni −60 dan +60 mm gacha o‘zgartirib B(x) ni oling; 80 va 120 mm li halqalar uchun takrorlang. Markazdagi B ning radiusga bog‘lanishini tekshiring.','Nazariy qiymatlarni <span class="f">B = μ₀IR²/(2(R²+x²)^{3/2})</span> bo‘yicha hisoblab, jadvalning oxirgi ustunini to‘ldiring. Tajriba va nazariya farqining sabablarini muhokama qiling.'])),
+    ...section('O‘lchash jurnali',J.root),
+    ...section('Natijani tekshirish',verify([{label:'To‘g‘ri o‘tkazgich uchun r₀ (1/B – s grafigidan)',unit:'mm',truth:()=>r0,tol:.1},{label:'40 mm halqa markazidagi B (20 A)',unit:'mT',truth:()=>mu0*20/(2*.02)*1e3,tol:.03}])),
+    theory('Qisqacha nazariya','<p>Bio–Savar–Laplas qonuni: <span class="f">dB = (μ₀/4π)·I·[dl × r]/r³</span>. Cheksiz to‘g‘ri o‘tkazgich uchun <span class="f">B = μ₀I/(2πs)</span>; radiusi R bo‘lgan halqa o‘qida <span class="f">B = μ₀IR²/(2(R²+x²)^{3/2})</span>, markazda B = μ₀I/2R. Xoll zondi maydonning zond tekisligiga tik tashkil etuvchisini o‘lchaydi, shuning uchun to‘g‘ri sim uchun tangensial, halqa uchun aksial zond ishlatiladi.</p>'));
+  drag(cv,(x,y)=>Math.abs(y-108)<20&&Math.abs(x-(geo.cx+(cf.get()==='w'?6+Math.max(0,s.get())*2.2+35:s.get()*2.2)))<45,(x)=>{const v=cf.get()==='w'?(x-geo.cx-41)/2.2:(x-geo.cx)/2.2;s.set(Math.round(Math.max(-60,Math.min(60,v))*2)/2)});loop(draw)}});
+
+/* ================= 12-ish: Yer maydoni — aylanuvchi g‘altak ================= */
+LABS.push({id:12,short:'Yer maydoni (induksiya)',kind:'aylanuvchi g‘altak, CASSY',title:'Yer magnit maydonini aylanuvchi induksion g‘altak yordamida o‘lchash',
+goal:'Induksion g‘altakni uch o‘q atrofida aylantirib, induksiyalangan kuchlanishning amplitudasi va davridan Yer magnit maydoni induksiyasining tashkil etuvchilarini hamda magnit og‘ish (enkayish) burchagini aniqlang.',
+build(main){const Bh=V(12,'bh',22,30)*1e-6,Bv=V(12,'bv',40,50)*1e-6,decl=V(12,'d',4,9)*Math.PI/180,N=130,R=.15;
+  const Bx=Bh*Math.cos(decl),By=Bh*Math.sin(decl),Bz=Bv;let rec=[],t=0,running=false,speed=.3,axis='z',ph=0;
+  const cv=el('canvas'),lu=lcd('Mikrovoltmetr','mV'),lt=lcd('Yozuv vaqti','s');
+  const ax=select({label:'Aylanish o‘qi',options:[['z','z (vertikal) — U ∝ √(Bx²+By²)'],['x','x (shimol–janub) — U ∝ √(By²+Bz²)'],['y','y (sharq–g‘arb) — U ∝ √(Bx²+Bz²)']],onchange:v=>{axis=v}});
+  const sp=slider({label:'Motor tezligi',min:0,max:.6,step:.01,value:.3,unit:'ayl/s',oninput:v=>speed=v});
+  const J=journal([{h:'O‘q'},{h:'T, s',edit:true},{h:'U₀, mV',edit:true},{h:'a = 2π²R²N/T, m²',edit:true},{h:'B, µT',edit:true}]);
+  const Bperp=()=>axis==='z'?Math.hypot(Bx,By):axis==='x'?Math.hypot(By,Bz):Math.hypot(Bx,Bz);
+  function frame(dt){if(running){t+=dt;ph+=2*Math.PI*speed*dt;const U=Math.PI*R*R*N*Bperp()*2*Math.PI*speed*Math.sin(ph)*1e3;rec.push([t,noisy(U,.01,.004)]);if(t>20)running=false}
+    const{g,w,h}=fit(cv,200);g.clearRect(0,0,w,h);gBox(g,40,60,110,90,'#2b3a47');gLabel(g,'tajriba motori',95,170);gLed(g,55,75,running,'#5fd39a','yozuv');gLabel(g,fmt(speed,2)+' ayl/s',95,120,'center','#7CF0B0');g.save();g.translate(260,105);g.strokeStyle=WIRE;g.lineWidth=4;g.beginPath();g.ellipse(0,0,Math.max(4,Math.abs(Math.cos(ph))*60),60,0,0,7);g.stroke();g.restore();gLabel(g,`g‘altak: N = ${N}, R = ${R} m`,260,185);
+    gWire(g,[[150,105],[195,105]],'#9fb3c4',2);gBox(g,w-180,60,150,70,'#1a242d');gLabel(g,'Mikrovoltmetr → CASSY',w-105,76,'center',INK);const U=rec.length?rec[rec.length-1][1]:0;gLabel(g,fmt(U,3)+' mV',w-105,102,'center','#7CF0B0',15);
+    lu.set(fmt(U,3));lt.set(t,1);
+    plot(pc,{series:[{pts:rec,color:'#c0182b',line:true,dots:false}],xlabel:'t, s',ylabel:'U, mV',hover:(a,b)=>`t = ${fmt(a,3)} s;  U = ${fmt(b,4)} mV`})}
+  const pc=el('canvas',{style:'height:300px'});
+  main.append(el('div',{class:'rig'},el('div',{class:'bench'},cv,el('div',{class:'cap'},'Yozuv 20 s davom etadi. Grafik ustida kursor bilan nol kesishish nuqtalarining vaqtini (davr T) va maksimumni (amplituda U₀) aniqlang.')),el('div',{class:'side'},lu.root,lt.root,el('div',{class:'card'},ax.root,sp.root,el('div',{class:'btns'},button('F9 — yozuvni boshlash',()=>{rec=[];t=0;running=true;SFX.beep()}),button('F4 — tozalash',()=>{rec=[];t=0;running=false},'ghost'),button('Satr qo‘shish',()=>J.add([axis,'','','',''])))))),
+    ...section('Oszillogramma U(t)',el('div',{class:'card'},pc)),
+    ...section('Bajarish tartibi',steps(['Aylanish o‘qini z qilib, motor tezligini ≈ 0,3 ayl/s ga o‘rnating va yozuvni boshlang.','Grafikdan ikki qo‘shni nol kesishish orasidagi vaqtni o‘lchang: T = 2·Δt (aniqlik uchun 5 davrni o‘lchab 5 ga bo‘ling). Amplituda U₀ ni (bir necha maksimum o‘rtachasi) yozing.','<span class="f">a = 2π²R²N/T</span> ni hisoblang va <span class="f">B⊥ = U₀/a</span> ni toping — bu aylanish o‘qiga tik tashkil etuvchi.','x va y o‘qlari uchun takrorlang. Uch tenglamadan Bx, By, Bz ni toping: masalan <span class="f">Bz² = (U_x² + U_y² − U_z²)/(2a²)</span> (har bir o‘q uchun o‘z a bilan).','Gorizontal tashkil etuvchi <span class="f">B_h = √(Bx²+By²)</span>, to‘liq induksiya <span class="f">B = √(B_h²+Bz²)</span> va enkayish burchagi <span class="f">tg i = Bz/B_h</span> ni hisoblang. Natijani Urganch uchun ma’lumotnoma qiymatlari (B_h ≈ 27 µT, i ≈ 59°) bilan taqqoslang.','Motor tezligi ikki marta oshirilsa U₀ qanday o‘zgaradi? Tekshiring va tushuntiring.'])),
+    ...section('O‘lchash jurnali',J.root),
+    ...section('Natijani tekshirish',verify([{label:'Gorizontal tashkil etuvchi B_h',unit:'µT',truth:()=>Bh*1e6,tol:.05},{label:'Vertikal tashkil etuvchi B_z',unit:'µT',truth:()=>Bz*1e6,tol:.05},{label:'Enkayish burchagi i',unit:'°',truth:()=>Math.atan2(Bz,Bh)*180/Math.PI,abs:2}])),
+    theory('Qisqacha nazariya','<p>Bir jinsli maydonda ω burchak tezlik bilan aylanayotgan g‘altakda oqim Φ = πR²N·B⊥·cos ωt, induksiya EYuK <span class="f">U = πR²N·B⊥·ω·sin ωt</span>; amplituda U₀ = 2π²R²N·B⊥/T. Faqat aylanish o‘qiga tik tashkil etuvchi hissa qo‘shadi, shuning uchun uch o‘q bo‘yicha o‘lchash vektorning uchala komponentini beradi.</p>'));
+  loop(frame)}});
+
+/* ================= 13-ish: tangens-bussol ================= */
+LABS.push({id:13,short:'Tangens-bussol',kind:'Yer maydonining H₀ si',title:'Yer magnit maydoni kuchlanganligining gorizontal tashkil etuvchisini tangens-bussol yordamida aniqlash',
+goal:'Tangens-galvanometr strelkasining tok ta’sirida og‘ish burchagini to‘g‘ri va teskari tokda o‘lchab, Yer maydonining gorizontal tashkil etuvchisi H₀ ni va asbob doimiysini aniqlang.',
+build(main){const H0=V(13,'h',19,25),N=5,Rc=.15,mis=V(13,'m',-2.5,2.5),asym=V(13,'as',-1,1);let dir=1,on=false;
+  const cv=el('canvas'),la=lcd('Strelka ko‘rsatishi (ikki uchi)','°'),li=lcd('Ampermetr','A'),nd=new Needle(0,4,.12),na=new Needle(0,9,.5);
+  const I=slider({label:'Reostat: tok kuchi I',min:0,max:.6,step:.01,value:.2,unit:'A',nudges:[.01,.1],nudgeLabel:x=>fmt(x,2),oninput:draw});
+  const J=journal([{h:'I, A',d:2},{h:'α₁, °',d:1},{h:'α₂, °',d:1},{h:'α₃, °',d:1},{h:'α₄, °',d:1},{h:'α_o‘rt, °',edit:true},{h:'H₀, A/m',edit:true}]);
+  const Hc=()=>N*I.get()/(2*Rc);const alpha=()=>Math.atan(Hc()/H0)*180/Math.PI*dir;
+  const readings=()=>{const a=on?alpha():0;return[a+mis+asym,a+mis-asym]};
+  function draw(dt=0,t=0){const[rr1,rr2]=readings();nd.set(rr1);const r1=nd.update(dt),r2=r1-2*asym;na.set(on?I.get():0);const ia=na.update(dt);const{g,w,h}=fit(cv,260);g.clearRect(0,0,w,h);const cx=w*.4,cy=130;
+    g.strokeStyle=WIRE;g.lineWidth=5;g.beginPath();g.ellipse(cx,cy,18,100,0,0,7);g.stroke();gLabel(g,'g‘altak: N = '+N+', R = '+Rc+' m',cx,245);
+    g.fillStyle='#0b1f17';g.strokeStyle='#9fb3c4';g.lineWidth=1.5;g.beginPath();g.arc(cx,cy,60,0,7);g.fill();g.stroke();for(let k=0;k<360;k+=10){const a=k*Math.PI/180;g.strokeStyle=k%90?'#5a7389':INK;g.beginPath();g.moveTo(cx+Math.cos(a)*(k%30?54:50),cy+Math.sin(a)*(k%30?54:50));g.lineTo(cx+Math.cos(a)*58,cy+Math.sin(a)*58);g.stroke()}
+    gLabel(g,'0',cx,cy-70,'center',INK,10);gLabel(g,'180',cx,cy+70,'center',INK,10);gLabel(g,'90',cx+70,cy,'center',INK,10);gLabel(g,'270',cx-70,cy,'center',INK,10);
+    const a=-Math.PI/2+r1*Math.PI/180;g.strokeStyle=REDC;g.lineWidth=3;g.beginPath();g.moveTo(cx,cy);g.lineTo(cx+Math.cos(a)*48,cy+Math.sin(a)*48);g.stroke();g.strokeStyle=BLUC;g.beginPath();g.moveTo(cx,cy);g.lineTo(cx-Math.cos(a)*48,cy-Math.sin(a)*48);g.stroke();gDot(g,cx,cy,INK,3);
+    gLabel(g,'N (magnit meridiani)',cx,20,'center',MUT);
+    gWire(g,[[cx+18,cy],[cx+120,cy]]);gMeter(g,cx+150,cy,'A',fmt(ia,2),'A');if(on)gFlow(g,[[cx+18,cy],[cx+120,cy]],dir*I.get()*20,t);gWire(g,[[cx+172,cy],[w-80,cy],[w-80,cy-40]]);gBat(g,w-80,cy-60,null);gWire(g,[[w-80,cy-74],[w-80,cy-100],[cx,cy-100],[cx,cy-100]]);gLabel(g,'P: tok yo‘nalishi '+(dir>0?'→':'←'),w-80,cy+30);
+    la.set(fmt(noisy(r1,0,.15),1)+' / '+fmt(noisy(((r2+180)%360),0,.15),1));li.set(noisy(ia,.003,.002),3)}
+  main.append(el('div',{class:'rig'},el('div',{class:'bench'},cv,el('div',{class:'cap'},'Strelka tok ulanganda tebranib, 2–3 sekundda o‘rnashadi — sanoqni strelka to‘xtagach oling. Shkala 0–360°. Tok yo‘q bo‘lganda strelka magnit meridianida (0 va 180°) turishi kerak; kichik nosozlik (strelka og‘ishi va ekssentriklik) real asbobdagidek modellashtirilgan — shuning uchun to‘rtta sanoq o‘rtachalanadi.')),el('div',{class:'side'},la.root,li.root,el('div',{class:'card'},I.root,el('div',{class:'btns'},button('Kalit K: tokni ulash/uzish',()=>{on=!on;SFX.relay()}),button('P: tok yo‘nalishini o‘zgartirish',()=>{dir=-dir;SFX.relay()},'ghost'),button('Jadvalga yozish (joriy α₁, α₂)',()=>{const r1=nd.v,r2=r1-2*asym;J.add([I.get(),noisy(r1,0,.15),noisy(r2,0,.15),'','','',''])}))))),
+    ...section('Bajarish tartibi',steps(['Tok yo‘q holda strelkaning 0 va 180° ni ko‘rsatishini tekshiring (asbobni magnit meridianiga o‘rnatish).','I = 0,2 A: kalitni ulang, strelkaning ikki uchi ko‘rsatishini (α₁, α₂) jadvalga yozing. P bilan tok yo‘nalishini o‘zgartirib, α₃, α₄ ni yozing (ikkinchi satrga). To‘rt qiymatning modullari o‘rtachasini oling.','I = 0,3; 0,4; 0,5 A uchun takrorlang.','Har bir tok uchun <span class="f">H₀ = N·I / (2R·tg α)</span> ni hisoblang (N = 5, R = 0,15 m), o‘rtacha H₀, absolyut va nisbiy xatolikni toping.','Asbob doimiysini aniqlang: <span class="f">C = 2R·H₀/N</span>, u holda I = C·tg α.','Nima uchun katta toklarda (α → 90°) aniqlik pasayadi? α ≈ 45° da xatolik minimal ekanini tushuntiring. B_h = μ₀H₀ ni 12-ish natijasi bilan taqqoslang.'])),
+    ...section('O‘lchash jurnali',J.root),
+    ...section('Natijani tekshirish',verify([{label:'Yer maydonining gorizontal tashkil etuvchisi H₀',unit:'A/m',truth:()=>H0,tol:.04}])),
+    theory('Qisqacha nazariya','<p>G‘altak markazida tok maydoni <span class="f">H = N·I/(2R)</span> Yer maydonining gorizontal tashkil etuvchisi H₀ ga tik yo‘nalgan. Strelka natijaviy maydon bo‘ylab o‘rnashadi: <span class="f">tg α = H / H₀</span>, bundan H₀ = N·I/(2R·tg α). Tokni teskari burish strelka va shkala nosozliklarini yo‘qotadi.</p>'));
+  loop(draw)}});
+/* ================= 14-ish: Valtenxofen mayatnigi ================= */
+LABS.push({id:14,short:'Uyurma toklar',kind:'Valtenxofen mayatnigi',title:'Valtenxofen mayatnigi: uyurma (Fuko) toklarining so‘nishini kuzatish',
+goal:'Elektromagnit maydonida tebranayotgan metall plastinkaning uyurma toklar tufayli so‘nishini kuzating; so‘nish darajasining magnit maydon kuchiga va plastinka shakliga bog‘liqligini aniqlang.',
+build(main){const k0=V(14,'k',.9,1.6);let th=0,om=0,swing=false,t=0,peaks=[],lastSign=1,T0=1.4,sig=-1;
+  const cv=el('canvas'),ln=lcd('Tebranishlar soni (amplituda yarmigacha)',''),lt=lcd('Sekundomer','s'),la=lcd('Joriy amplituda','°');
+  const I=slider({label:'Elektromagnit toki',min:0,max:5,step:.25,value:0,unit:'A'});
+  const pl=select({label:'Plastinka',options:[['solid','Yaxlit mis plastinka'],['slot','Tirqishli (taroqsimon) plastinka'],['plast','Plastmassa plastinka (nazorat)']]});
+  const J=journal([{h:'Plastinka'},{h:'I, A',d:2},{h:'A₀, °',d:0},{h:'N (A → A₀/2)',d:0},{h:'t, s',d:1},{h:'δ, s⁻¹',edit:true}]);
+  const damp=()=>{const B2=Math.pow(I.get()/5,2)*(1-.3*Math.pow(I.get()/5,2)),f=pl.get()==='solid'?1:pl.get()==='slot'?.12:0;return .03+k0*B2*f};
+  let A0=30,count=0,done=false;
+  function frame(dt){const w0=2*Math.PI/T0;if(swing){for(let i=0;i<4;i++){const d=dt/4;const acc=-w0*w0*Math.sin(th*Math.PI/180)*180/Math.PI-2*damp()*om;om+=acc*d;th+=om*d;t+=d;
+      const s=Math.sign(om);if(s!==lastSign&&s!==0){lastSign=s;const amp=Math.abs(th);if(!done){if(amp<A0/2){done=true}else count+=.5}}}}
+    const{g,w,h}=fit(cv,280);g.clearRect(0,0,w,h);const px=w/2,py=40,L=170;
+    g.fillStyle='#8a2a2a';g.fillRect(px-70,180,36,60);g.fillStyle='#2a4a8a';g.fillRect(px+34,180,36,60);g.fillStyle='#555';g.fillRect(px-70,240,140,16);gLabel(g,'N',px-52,170,'center',REDC);gLabel(g,'S',px+52,170,'center',BLUC);
+    const glow=I.get()/5;g.fillStyle=`rgba(120,160,255,${.08+.3*glow})`;g.fillRect(px-34,180,68,60);gLabel(g,'I = '+fmt(I.get(),2)+' A',px,268);gLed(g,px-120,268,I.get()>0,'#5fd39a','elektromagnit');
+    const a=th*Math.PI/180;g.save();g.translate(px,py);g.rotate(a);g.strokeStyle='#9fb3c4';g.lineWidth=3;g.beginPath();g.moveTo(0,0);g.lineTo(0,L);g.stroke();g.fillStyle=pl.get()==='plast'?'#d9c17a':'#c87533';g.fillRect(-22,L-10,44,50);if(pl.get()==='slot'){g.fillStyle='#0D141A';for(let i=-16;i<=16;i+=8)g.fillRect(i-1.5,L-6,3,38)}g.restore();gDot(g,px,py,INK,4);
+    ln.set(String(count));lt.set(t,1);la.set(Math.abs(th),1)}
+  main.append(el('div',{class:'rig'},el('div',{class:'bench'},cv,el('div',{class:'cap'},'Mayatnik 30° dan qo‘yib yuboriladi. Hisoblagich amplituda dastlabki qiymatning yarmiga tushguncha yarim tebranishlarni sanaydi.')),el('div',{class:'side'},ln.root,lt.root,la.root,el('div',{class:'card'},I.root,pl.root,el('div',{class:'btns'},button('30° dan qo‘yib yuborish',()=>{th=30;om=0;t=0;count=0;done=false;swing=true;lastSign=1;SFX.click(400,.08,.1)}),button('To‘xtatish',()=>{swing=false;th=0;om=0},'ghost'),button('Jadvalga yozish',()=>J.add([pl.root.querySelector('select').selectedOptions[0].textContent,I.get(),30,count,t,''])))))),
+    ...section('Bajarish tartibi',steps(['Yaxlit plastinka, I = 0: mayatnikni qo‘yib yuboring, amplituda 15° ga tushguncha tebranishlar soni N va vaqtni yozing.','I = 1, 2, 3, 4, 5 A da takrorlang. Har bir holat uchun so‘nish koeffitsiyentini baholang: <span class="f">δ = ln 2 / t</span> (t — amplituda yarmiga tushish vaqti).','δ ning I ga bog‘lanish grafigini chizing. δ ∝ I² (ya’ni ∝ B²) ekanini tekshiring; katta toklarda o‘zakning to‘yinishini hisobga oling.','Tirqishli plastinka bilan I = 5 A da takrorlang. So‘nish necha marta kamaydi? Nima uchun?','Plastmassa plastinka bilan I = 5 A da tekshiring: magnit maydon unga ta’sir qiladimi?','Uyurma toklardan foydalanish (elektr hisoblagichlar, tormozlar, induksion pechlar) va ularga qarshi kurashish (plastinali o‘zaklar) misollarini keltiring.'])),
+    ...section('O‘lchash jurnali',J.root),
+    ...section('Natijani tekshirish',verify([{label:'Yaxlit plastinka, I = 5 A: so‘nish koeffitsiyenti δ',unit:'s⁻¹',truth:()=>.03+k0*.7,tol:.12}])),
+    theory('Qisqacha nazariya','<p>Nobirjinsli maydonda harakatlanayotgan o‘tkazgichda magnit oqimi o‘zgaradi va Faradey qonuniga ko‘ra uyurma toklar induksiyalanadi. Lens qoidasiga binoan ularga ta’sir etuvchi Amper kuchi harakatga qarshi yo‘nalgan: so‘nish kuchi F ∝ σ·B²·v. Plastinkadagi tirqishlar tok konturlarini uzib, uyurma toklarni keskin kamaytiradi — transformator o‘zaklari aynan shu sababli yupqa plastinalardan yig‘iladi.</p>'));
+  loop(frame)}});
+
+/* ================= 15-ish: gisterezis ================= */
+LABS.push({id:15,short:'Gisterezis halqasi',kind:'ferromagnit, CASSY',title:'Ferromagnitning magnitlanish egri chizig‘i va gisterezis halqasini o‘lchash',
+goal:'Transformator o‘zagi uchun B(H) bog‘lanishni avtomatik yozib oling; to‘yinish induksiyasi, qoldiq induksiya, koersitiv kuch va magnit singdiruvchanlikni aniqlang.',
+build(main){const Bs=V(15,'bs',1.1,1.5),Hc=V(15,'hc',60,140),Hk=V(15,'hk',90,180),N1=500,Lm=.48;let H=0,Bm=0,demag=true,rec=[],run=false,phase=0,t=0;
+  const cv=el('canvas'),lh=lcd('H','A/m'),lb=lcd('B','T');
+  const Im=slider({label:'Tok amplitudasi I_max',min:.1,max:2,step:.05,value:1,unit:'A'});
+  const J=journal([{h:'I_max, A',d:2},{h:'B_s, T',edit:true},{h:'B_r, T',edit:true},{h:'H_c, A/m',edit:true},{h:'μ_r (boshlang‘ich)',edit:true}]);
+  /* oddiy model: yuqoriga yoki pastga harakatda B = Bs·tanh((H ∓ Hc)/Hk), halqa ichida o‘tishlar silliq */
+  let Bstate=0,Hprev=0;
+  function Bof(Hn){const up=Hn>=Hprev;const target=Bs*Math.tanh((Hn-(up?Hc:-Hc))/Hk);if(demag){const anh=Bs*Math.tanh(Hn/Hk);Bstate+= (anh-Bstate)*Math.min(1,Math.abs(Hn-Hprev)/Hk*3);if(Math.abs(Hn)>2.5*Hk)demag=false}
+    else Bstate+=(target-Bstate)*Math.min(1,Math.abs(Hn-Hprev)/Hk*2.2);Hprev=Hn;return Bstate}
+  function frame(dt,tt){if(run){t+=dt;phase+=dt*.9;const I=Im.get()*Math.sin(phase);H=N1*I/Lm;Bm=noisy(Bof(H),.004,.004);rec.push([H,Bm]);if(phase>2*Math.PI*2.25){run=false}}
+    const{g,w,h}=fit(cv,180);g.clearRect(0,0,w,h);g.strokeStyle='#8fa5b7';g.lineWidth=12;g.beginPath();g.rect(w/2-80,30,160,110);g.stroke();gCoil(g,w/2-80,85,70,'N₁ = 500',true);gCoil(g,w/2+80,85,70,'N₂ = 500',true);gLabel(g,'U-o‘zak, l = 0,48 m',w/2,165);gLabel(g,'Power-CASSY → I(t)',w/2-150,85,'center',MUT,10);gLed(g,w/2-150,105,run,'#5fd39a','o‘lchash');if(run)gFlow(g,[[w/2-80,30],[w/2-80,140]],Im.get()*Math.sin(phase)*8,t);gLabel(g,'Sensor-CASSY ← U₂ → ∫ → B',w/2+150,85,'center',MUT,10);
+    lh.set(H,0);lb.set(Bm,3);
+    plot(pc,{series:[{pts:rec,color:'#c0182b',line:true,dots:false}],xlabel:'H, A/m',ylabel:'B, T',hover:(a,b)=>`H = ${fmt(a,0)} A/m;  B = ${fmt(b,3)} T`})}
+  const pc=el('canvas',{style:'height:340px'});
+  main.append(el('div',{class:'rig'},el('div',{class:'bench'},cv,el('div',{class:'cap'},'Power-CASSY sinusoidal tok beradi (H = N₁I/l), Sensor-CASSY ikkilamchi g‘altak kuchlanishini integrallab B ni hisoblaydi. Yozuv 2 davrdan so‘ng avtomatik to‘xtaydi.')),el('div',{class:'side'},lh.root,lb.root,el('div',{class:'card'},Im.root,el('div',{class:'btns'},button('O‘zakni magnitsizlantirish',()=>{demag=true;Bstate=0;Hprev=0;rec=[];H=0;Bm=0},'ghost'),button('F9 — o‘lchashni boshlash',()=>{rec=[];phase=0;run=true;SFX.beep()}),button('Satr qo‘shish',()=>J.add([Im.get(),'','','',''])))))),
+    ...section('B(H) gisterezis halqasi',el('div',{class:'card'},pc)),
+    ...section('Bajarish tartibi',steps(['O‘zakni magnitsizlantiring, I_max = 1 A, o‘lchashni boshlang. Boshlang‘ich magnitlanish egri chizig‘i (koordinata boshidan chiqadigan) va so‘ng yopiq halqa hosil bo‘ladi.','Grafik ustida kursor yordamida aniqlang: to‘yinish induksiyasi B_s (halqa uchlari), qoldiq induksiya B_r (H = 0 dagi B), koersitiv kuch H_c (B = 0 dagi H).','Boshlang‘ich egri chiziqning kichik H dagi qiyaligidan boshlang‘ich singdiruvchanlikni toping: <span class="f">μ_r = (1/μ₀)·ΔB/ΔH</span>; maksimal μ_r ni ham baholang.','I_max = 0,2; 0,4; 0,6 A da (har safar magnitsizlantirib) xususiy halqalarni oling. Halqa uchlarining geometrik o‘rni — asosiy magnitlanish egri chizig‘i. Uni chizing.','Halqa yuzasi bir davrdagi qayta magnitlanish energiya yo‘qotishiga teng (J/m³). Katta halqa uchun yuzani taxminan hisoblang va 50 Hz da o‘zakdagi quvvat yo‘qotishini baholang (o‘zak hajmi ≈ 2·10⁻⁴ m³).','Bu material yumshoq yoki qattiq magnit material? Transformator o‘zagi uchun qaysi biri kerak?'])),
+    ...section('O‘lchash jurnali',J.root),
+    ...section('Natijani tekshirish',verify([{label:'To‘yinish induksiyasi B_s',unit:'T',truth:()=>Bs,tol:.05},{label:'Qoldiq induksiya B_r',unit:'T',truth:()=>Bs*Math.tanh(Hc/Hk),tol:.08},{label:'Koersitiv kuch H_c',unit:'A/m',truth:()=>Hc,tol:.08}])),
+    theory('Qisqacha nazariya','<p>Ferromagnitda B = μ₀μ_r H bog‘lanish chiziqli emas va magnitlanish tarixiga bog‘liq. Domenlar chegaralarining qaytmas siljishi tufayli H kamaytirilganda B oldingi qiymatiga qaytmaydi — gisterezis. Halqa yuzasi qayta magnitlanishga sarflangan energiyani beradi; yumshoq materiallarda (transformator po‘lati) H_c kichik va halqa tor.</p>'));
+  loop(frame)}});
+
+/* ================= o‘qituvchi kaliti ================= */
+LABS.push({id:16,short:'O‘qituvchi uchun',kind:'variant kalitlari',title:'Variantlar bo‘yicha to‘g‘ri javoblar',goal:'Har bir variant uchun stendlarning yashirin parametrlari. Bo‘lim parol bilan ochiladi.',
+build(main){const inp=el('input',{type:'password',placeholder:'Parol','aria-label':'Parol',style:'border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:7px 10px'}),out=el('div');
+  const open=()=>{if(inp.value!=='UrDU-2026'){out.textContent='Parol noto‘g‘ri.';return}const keep=VARIANT,rows=[];
+    for(let v=1;v<=30;v++){VARIANT=v;const kq=V(1,'k',6,11),sa=2.0+V(1,'a',-.3,.3),sv=-3.5+V(1,'v',-.4,.4);
+      rows.push([v,fmt(kq*Math.tanh((sa-sv)/2),1),fmt(V(3,'cx',.82,1.25),3),fmt(10*(1+V(4,'a',-.02,.02)),2),fmt(100*(1+V(4,'b',-.02,.02)),1),fmt(1000*(1+V(4,'c',-.02,.02)),0),fmt(V(5,'eg',.55,.95),2),fmt(V(6,'L',.06,.16),3),fmt(V(6,'r',8,25),1),fmt(V(7,'rx',400,1500),0),fmt(V(7,'cx',180,900),0),fmt(V(7,'lx',3,12),2),fmt(V(9,'rv',120,260),0),fmt(V(10,'b',.28,.5),3),fmt(V(11,'r0',1.6,2.4),2),fmt(V(12,'bh',22,30),1),fmt(V(12,'bv',40,50),1),fmt(V(13,'h',19,25),1),fmt(V(15,'bs',1.1,1.5),2),fmt(V(15,'hc',60,140),0)])}
+    VARIANT=keep;const H=['Var.','1: Q, nC','3: C_x, µF','4: R10','4: R100','4: R1k','5: ΔE, eV','6: L, H','6: r, Om','7: R_x','7: C_x, pF','7: L_x, mH','9: R_V, MOm','10: B, T','11: r₀, mm','12: B_h, µT','12: B_z, µT','13: H₀, A/m','15: B_s, T','15: H_c'];
+    out.textContent='';out.append(el('div',{class:'scroll'},el('table',{class:'j'},el('thead',null,el('tr',null,H.map(h=>el('th',null,h)))),el('tbody',null,rows.map(r=>el('tr',null,r.map(c=>el('td',null,String(c)))))))))};
+  main.append(el('div',{class:'verify'},inp,button('Ochish',open)),out)}});
+
+/* ================= natijalarni topshirish va o‘qituvchi paneli ================= */
+/* Google Apps Script veb-ilovasi manzili — SOZLASH.md ga qarang */
+const BACKEND='PASTE_APPS_SCRIPT_URL_HERE';
+const COURSE='elektr',MAXLAB=15,PANEL_ID=17;
+const TRACK={journals:{},checks:{}};
+const _journal=journal;journal=function(cols,opt){const j=_journal(cols,opt);(TRACK.journals[current]=TRACK.journals[current]||[]).push({cols:cols.map(c=>c.h),j});return j};
+const _verify=verify;verify=function(items){const root=_verify(items);
+  [...root.querySelectorAll('.verify')].forEach((row,i)=>{const it=items[i],inp=row.querySelector('input'),res=row.querySelector('.res');
+    row.querySelector('button').addEventListener('click',()=>{setTimeout(()=>{(TRACK.checks[current]=TRACK.checks[current]||{})[it.label]={value:inp.value,ok:res.classList.contains('ok'),msg:res.textContent}},0)})});
+  return root};
+function parseWho(){return ($('#who').value||'').trim()}
+function payload(lab){const labObj=LABS.find(l=>l.id===lab);return{action:'submit',course:COURSE,name:parseWho(),variant:VARIANT,lab,title:labObj?labObj.title:'',
+  checks:TRACK.checks[lab]||{},journals:(TRACK.journals[lab]||[]).map(x=>({cols:x.cols,rows:x.j.rows})),ua:navigator.userAgent.slice(0,80),ts:new Date().toISOString()}}
+async function api(body){if(!BACKEND.startsWith('http'))throw new Error('Server manzili sozlanmagan (BACKEND).');const r=await fetch(BACKEND,{method:'POST',body:JSON.stringify(body)});const t=await r.text();try{return JSON.parse(t)}catch(e){throw new Error('Server javobi noto‘g‘ri: '+t.slice(0,80))}}
+function submitCard(lab){const st=el('p',{class:'res'});const key='sub_'+lab+'_'+VARIANT;const prev=store.get(key,'');
+  if(prev){try{const p=JSON.parse(prev);st.className='res ok';st.textContent=`Oldin topshirilgan: ${p.at} (kod ${p.id}). Qayta topshirsangiz, yangi yozuv sifatida saqlanadi.`}catch(e){}}
+  const go=async()=>{const who=parseWho();if(who.length<5||!/\d/.test(who)){st.className='res bad';st.textContent='Yuqoridagi “Talaba” maydoniga familiya, ism va guruh raqamini kiriting (masalan: Karimov A., 401-guruh).';$('#who').focus();return}
+    const p=payload(lab);const nJ=p.journals.reduce((s,j)=>s+j.rows.length,0),nC=Object.keys(p.checks).length;
+    if(nJ===0&&nC===0){st.className='res bad';st.textContent='Jurnal bo‘sh va hech bir natija tekshirilmagan — topshirishga hali erta.';return}
+    st.className='res';st.textContent='Yuborilmoqda…';
+    try{const r=await api(p);if(!r.ok)throw new Error(r.error||'xato');const at=new Date().toLocaleString('uz-UZ');store.set(key,JSON.stringify({id:r.id,at}));st.className='res ok';st.textContent=`Topshirildi. Tasdiq kodi: ${r.id}. Jurnal satrlari: ${nJ}, tekshirilgan natijalar: ${nC}.`;if(typeof SFX!=='undefined')SFX.beep()}
+    catch(e){st.className='res bad';st.textContent='Yuborilmadi: '+e.message+' Internetni tekshiring yoki o‘qituvchiga xabar bering.'}};
+  return el('div',{class:'card',style:'margin-top:14px'},el('h2',{style:'margin:0 0 8px'},'Natijani o‘qituvchiga topshirish'),
+    el('p',{class:'pass'},'Topshirilganda jurnal(lar)dagi barcha satrlar, “Natijani tekshirish” maydonlarida kiritgan qiymatlaringiz va ularning to‘g‘ri/noto‘g‘riligi, variant raqami va vaqt o‘qituvchi jadvaliga yoziladi. Avval barcha o‘lchashlarni bajaring, natijalarni tekshiring, so‘ng topshiring.'),
+    el('div',{class:'btns'},button('Natijani topshirish',go)),st)}
+const _show=show;show=function(id){_show(id);const lab=LABS.find(l=>l.id===id);if(lab&&lab.id<=MAXLAB)$('#main').append(submitCard(lab.id))};
+/* ---------- o‘qituvchi paneli ---------- */
+LABS.push({id:PANEL_ID,short:'Natijalar (o‘qituvchi)',kind:'topshiriqlarni ko‘rish va baholash',title:'Talabalar natijalari',goal:'Topshirilgan ishlar ro‘yxati. Parol bilan ochiladi; har bir ishni ochib, jurnal va tekshirish natijalarini ko‘rish, baho va izoh yozish mumkin.',
+build(main){const pw=el('input',{type:'password',placeholder:'O‘qituvchi paroli','aria-label':'Parol',style:'border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:7px 10px'}),out=el('div'),flt=el('input',{placeholder:'Qidirish: familiya, guruh, ish raqami…',style:'border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:7px 10px;width:100%;margin:10px 0'});
+  let rows=[];
+  const render=()=>{const q=flt.value.toLowerCase();const list=rows.filter(r=>!q||(r.name+' '+r.lab+' '+r.title).toLowerCase().includes(q)).sort((a,b)=>(b.ts||'').localeCompare(a.ts||''));
+    out.textContent='';if(!list.length){out.append(el('p',{class:'empty'},'Hali topshiriqlar yo‘q.'));return}
+    const tbl=el('table',{class:'j'},el('thead',null,el('tr',null,['Sana','Talaba','Var.','Ish','Tekshiruv','Baho','Izoh',''].map(h=>el('th',null,h)))));
+    const tb=el('tbody');list.forEach(r=>{const ch=r.checks||{},n=Object.keys(ch).length,okN=Object.values(ch).filter(c=>c.ok).length;
+      const det=el('tr',{hidden:true}),td=el('td',{colspan:'8',style:'text-align:left;white-space:normal'});det.append(td);
+      const tr=el('tr',null,el('td',null,(r.ts||'').replace('T',' ').slice(0,16)),el('td',{style:'text-align:left'},r.name),el('td',null,String(r.variant)),el('td',{style:'text-align:left'},`${r.lab}-ish`),
+        el('td',null,n?`${okN}/${n}`:'—'),el('td',null,r.grade||'—'),el('td',{style:'text-align:left;max-width:14rem;overflow:hidden;text-overflow:ellipsis'},r.comment||''),
+        el('td',null,el('button',{onclick:()=>{det.hidden=!det.hidden;if(!det.hidden&&!td.children.length)td.append(detail(r))}},'▼')));
+      tb.append(tr,det)});tbl.append(tb);out.append(el('div',{class:'scroll'},tbl))};
+  function detail(r){const box=el('div');box.append(el('p',{class:'pass'},el('b',null,r.title),` — ${r.name}, variant ${r.variant}, ${(r.ts||'').replace('T',' ').slice(0,19)}`));
+    const ch=r.checks||{};if(Object.keys(ch).length){const t=el('table',{class:'j'},el('thead',null,el('tr',null,['Tekshirilgan kattalik','Talaba qiymati','Natija'].map(h=>el('th',null,h)))),el('tbody',null,Object.entries(ch).map(([k,v])=>el('tr',null,el('td',{style:'text-align:left;white-space:normal'},k),el('td',null,v.value),el('td',{style:'color:'+(v.ok?'var(--ok)':'var(--warn)')},v.ok?'to‘g‘ri':'noto‘g‘ri')))));box.append(el('h3',{style:'margin:10px 0 4px;font-size:.95rem'},'Natijani tekshirish'),t)}
+    (r.journals||[]).forEach((j,i)=>{const head=el('tr',null,el('th',null,'№'),j.cols.map(c=>el('th',null,c)));
+      const body=el('tbody',null,j.rows.map((row,k)=>el('tr',null,el('td',null,String(k+1)),row.map(v=>el('td',null,typeof v==='number'?fmt(v,3):String(v??''))))));
+      box.append(el('h3',{style:'margin:10px 0 4px;font-size:.95rem'},`Jurnal ${i+1} (${j.rows.length} satr)`),el('div',{class:'scroll'},el('table',{class:'j'},el('thead',null,head),body)))});
+    const g=el('input',{value:r.grade||'',placeholder:'baho (0–100 yoki 2–5)',style:'width:9rem;border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:6px 8px'}),c=el('input',{value:r.comment||'',placeholder:'izoh talabaga',style:'flex:1;min-width:12rem;border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:6px 8px'}),m=el('span',{class:'res'});
+    box.append(el('div',{class:'verify',style:'margin-top:10px'},g,c,button('Bahoni saqlash',async()=>{m.textContent='Saqlanmoqda…';try{const res=await api({action:'grade',pw:pw.value,id:r.id,grade:g.value,comment:c.value});if(!res.ok)throw new Error(res.error||'xato');r.grade=g.value;r.comment=c.value;m.className='res ok';m.textContent='Saqlandi.';render()}catch(e){m.className='res bad';m.textContent=e.message}}),m));return box}
+  const load=async()=>{out.textContent='Yuklanmoqda…';try{const r=await api({action:'list',pw:pw.value});if(!r.ok)throw new Error(r.error||'xato');rows=r.rows.filter(x=>!x.course||x.course===COURSE);store.set('tpw',pw.value);render()}catch(e){out.textContent='Xato: '+e.message}};
+  pw.value=store.get('tpw','');flt.addEventListener('input',render);
+  const eye=el('button',{type:'button',class:'nb',title:'Parolni ko‘rsatish/yashirish',style:'height:2.3rem;min-width:2.6rem;font-size:1rem',onclick:()=>{pw.type=pw.type==='password'?'text':'password';eye.textContent=pw.type==='password'?'👁':'🙈'}},'👁');
+  if(!BACKEND.startsWith('http'))main.append(el('div',{class:'note'},el('b',null,'Server hali sozlanmagan. '),'Natijalar yig‘ilishi uchun index.html ichidagi BACKEND qatoriga Apps Script veb-ilovasining manzili yozilishi kerak (SOZLASH.md, 1–3-qadamlar).'));
+  main.append(el('div',{class:'verify'},el('span',{style:'display:inline-flex;gap:4px'},pw,eye),button('Ro‘yxatni yuklash',load),button('Excel uchun nusxa',()=>{const t=['Sana\tTalaba\tVariant\tIsh\tTekshiruv\tBaho\tIzoh',...rows.map(r=>{const ch=r.checks||{};return[(r.ts||'').slice(0,16),r.name,r.variant,r.lab,`${Object.values(ch).filter(c=>c.ok).length}/${Object.keys(ch).length}`,r.grade||'',r.comment||''].join('\t')})].join('\n');navigator.clipboard.writeText(t).then(()=>alert('Nusxa olindi — Excelga qo‘yish mumkin.'))},'ghost')),flt,out)}});
+
+boot();
+</script>
+</body>
+</html>
